@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+    <div class="max-w-lg mx-auto">
+
+        <!-- Update an existing subject information/header -->
+        <div class="text-center mt-24">
+
+            <!-- Update an existing subject information -->
+            <h2 class="text-4xl tracking-tight">
+                Update the subject
+            </h2>
+
+            <!-- Go to the list of subjects -->
+            <div class="mt-2">
+                <span class="text-sm">
+                    or go back to the
+                    <a href="{% url 'subjects:subject_list' %}"
+                       class="text-indigo-500">
+                        list of subjects
+                    </a>
+                </span>
+            </div>
+        </div>
+
+        <!-- Update the subject -->
+        <form method="post" class="mt-5">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit"
+                    class="w-full text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-md mt-2">
+                Update
+            </button>
+        </form>
+
+        <!-- Delete the subject -->
+        <div class="flex text-center mt-2 mb-10">
+            <a href="{% url 'subjects:subject_delete' subject.code %}"
+               class="w-full text-white bg-red-500 hover:bg-red-600 px-3 py-2 rounded-md mt-2">
+                Delete
+            </a>
+        </div>
+    </div>
+
+{% endblock content %}

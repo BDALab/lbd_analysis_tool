@@ -1,0 +1,288 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <section class="text-gray-600 body-font">
+
+        <!-- If there are subjects, show the table -->
+        {% if subjects %}
+
+            <div class="flex flex-col">
+                <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div class="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                        <div class="my-10 shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+
+                            <!-- Subjects header/information -->
+                            <div class="flex">
+
+                                <!-- Subjects information -->
+                                <div class="ml-2 mt-2">
+                                    {% if paginator.count > 1 %}
+                                        <p>There are <b>{{ paginator.count }}</b> subjects in total ({{ paginator.per_page }} subjects per page)</p>
+                                    {% else %}
+                                        {% if paginator.count > 0 %}
+                                            <p>There is <b>{{ paginator.count }}</b> subject so far ({{ paginator.per_page }} subjects per page)</p>
+                                        {% else %}
+                                            <p>There are <b>no</b> subjects</p>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+
+                                <!-- Create a new subject -->
+                                <a class="flex ml-auto text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
+                                   href="{% url 'subjects:subject_create' %}">
+                                    Create a new subject
+                                </a>
+                            </div>
+
+                            <!-- Subjects table -->
+                            <table class="sortable min-w-full divide-y divide-gray-200">
+
+                                <!-- Table head -->
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-6 py-4 pb-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            scope="col">
+                                            Subject
+                                        </th>
+                                        <th class="sorttable_nosort px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            scope="col">
+                                            Title
+                                        </th>
+                                        <th class="sorttable_nosort px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            scope="col">
+                                            Status
+                                        </th>
+                                        <th class="sorttable_nosort px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                            scope="col">
+                                            Role
+                                        </th>
+                                        <th class="sorttable_nosort relative px-6 py-3"
+                                            scope="col">
+                                            <span class="sr-only">
+                                                View/Edit/Delete
+                                            </span>
+                                        </th>
+                                    </tr>
+                                </thead>
+
+                                <!-- Table body -->
+                                <tbody class="bg-white divide-y divide-gray-200">
+
+                                    <!-- Subjects -->
+                                    {% for subject in subjects %}
+
+                                        <tr class="border-b border-gray-200 hover:bg-gray-100">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <div class="w-11 h-11 sm:mr-8 sm:mb-0 mb-4 inline-flex items-center justify-center rounded-full bg-indigo-100 text-indigo-500 flex-shrink-0 transform hover:text-indigo-600 hover:scale-110">
+                                                        <a href="{% url 'subjects:subject_detail' subject.code %}">
+                                                            <svg fill="none"
+                                                                 stroke="currentColor"
+                                                                 stroke-linecap="round"
+                                                                 stroke-linejoin="round"
+                                                                 stroke-width="2"
+                                                                 class="w-8 h-8"
+                                                                 viewBox="0 0 24 24">
+                                                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"></path>
+                                                                <circle cx="12" cy="7" r="4"></circle>
+                                                            </svg>
+                                                        </a>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-medium text-gray-900">
+                                                            {{ subject.code }}
+                                                        </div>
+                                                        <div class="text-sm text-gray-500">
+                                                            {{ subject.sex }} : {{ subject.age }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="text-sm text-gray-900">
+                                                    Regional Paradigm Technician
+                                                </div>
+                                                <div class="text-sm text-gray-500">
+                                                    Optimization
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                                  Active
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                Admin
+                                            </td>
+
+                                            <!-- View/edit/delete buttons -->
+                                            <td class="py-6 px-4 whitespace-nowrap text-right">
+                                                <div class="flex item-center justify-center">
+                                                    <div class="w-5 mr-2 text-gray-500 transform hover:text-indigo-600 hover:scale-110">
+                                                        <a href="{% url 'subjects:subject_detail' subject.code %}">
+                                                            <svg fill="none"
+                                                                 viewBox="0 0 24 24"
+                                                                 stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                            </svg>
+                                                        </a>
+                                                    </div>
+                                                    <div class="w-5 mr-2 text-gray-500 transform hover:text-indigo-600 hover:scale-110">
+                                                        <a href="{% url 'subjects:subject_update' subject.code %}">
+                                                            <svg fill="none"
+                                                                 viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                                            </svg>
+                                                        </a>
+                                                    </div>
+                                                    <div class="w-5 mr-0 text-gray-500 transform hover:text-red-600 hover:scale-110">
+                                                        <a href="{% url 'subjects:subject_delete' subject.code %}">
+                                                            <svg fill="none"
+                                                                 viewBox="0 0 24 24"
+                                                                 stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                        </tr>
+                                    {% endfor %}
+
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+                <div class="flex flex-col items-center my-5">
+                    <div class="flex text-gray-700">
+
+                        {% if page_obj.has_previous %}
+
+                             <!-- First page arrow -->
+                            {% if page_obj.number|add:'-2' > 1 %}
+                                <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
+                                    <a href="?page=1">
+                                        <svg width="100%"
+                                             height="100%"
+                                             fill="none"
+                                             viewBox="0 0 24 24"
+                                             stroke="currentColor"
+                                             stroke-width="2"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round"
+                                             class="feather feather-chevron-left w-6 h-6">
+                                            <polyline points="15 18 9 12 15 6"></polyline>
+                                        </svg>
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            <!-- Previous pages three dots -->
+                            {% if page_obj.number|add:'-3' > 1 %}
+                                <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
+                                    <a href="?page={{ page_obj.number|add:'-3' }}">
+                                        <svg width="16"
+                                             height="16"
+                                             fill="currentColor"
+                                             class="bi bi-three-dots"
+                                             viewBox="0 0 16 16">
+                                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+
+                        <!-- Pages -->
+                        {% for i in paginator.page_range %}
+                            <div class="flex h-12 font-medium rounded-full bg-gray-200">
+
+                                <!-- Selected page -->
+                                {% if page_obj.number == i %}
+                                    <div class="w-12 md:flex justify-center items-center hidden leading-5 transition duration-150 ease-in rounded-full bg-indigo-600 text-white">
+                                        {{ i }}
+                                    </div>
+
+                                <!-- Surrounding pages -->
+                                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <div class="w-12 md:flex justify-center items-center hidden cursor-pointer leading-5 transition duration-150 ease-in rounded-full transform hover:bg-indigo-500 hover:text-white hover:scale-105">
+                                        <a href="?page={{ i }}">
+                                            {{ i }}
+                                        </a>
+                                    </div>
+
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+
+                            <!-- Next pages three dots -->
+                            {% if page_obj.paginator.num_pages > page_obj.number|add:'3' %}
+                                <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
+                                    <a href="?page={{ page_obj.number|add:'3' }}">
+                                        <svg width="16"
+                                             height="16"
+                                             fill="currentColor"
+                                             class="bi bi-three-dots"
+                                             viewBox="0 0 16 16">
+                                            <path d="M3 9.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm5 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            <!-- Last page arrow -->
+                            {% if page_obj.paginator.num_pages > page_obj.number|add:'2' %}
+                                <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
+                                    <a href="?page={{ page_obj.paginator.num_pages }}">
+                                        <svg width="100%"
+                                             height="100%"
+                                             fill="none"
+                                             viewBox="0 0 24 24"
+                                             stroke="currentColor"
+                                             stroke-width="2"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round"
+                                             class="feather feather-chevron-right w-6 h-6">
+                                            <polyline points="9 18 15 12 9 6"></polyline>
+                                        </svg>
+                                    </a>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+
+                    </div>
+                </div>
+            {% endif %}
+
+        <!-- Else, show the information and the create button only -->
+        {% else %}
+
+            <!-- No subjects information -->
+            <div class="flex flex-col text-center w-full mt-20 mb-4 text-gray-700">
+                <p class="font-medium">
+                    There are no subjects so far
+                </p>
+            </div>
+
+            <!-- Create a new subject -->
+            <div class="flex flex-wrap justify-center mx-auto">
+                <a href="{% url 'subjects:subject_create' %}"
+                   class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
+                    Create a new subject
+                </a>
+            </div>
+        {% endif %}
+
+    </section>
+
+{% endblock content %}

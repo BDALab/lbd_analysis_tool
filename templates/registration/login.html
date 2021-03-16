@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+    <div class="max-w-lg mx-auto">
+
+        <!-- Login/signup information -->
+        <div class="text-center mt-24">
+
+            <!-- Lock image -->
+            <div class="flex items-center justify-center">
+                <svg fill="none"
+                     viewBox="0 0 24 24"
+                     class="w-12 h-12 text-indigo-500"
+                     stroke="currentColor">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+
+            <!-- Login information -->
+            <h2 class="text-4xl tracking-tight">
+                Login into your account
+            </h2>
+
+            <!-- Signup -->
+            <div class="mt-2">
+                <span class="text-sm">
+                    or
+                    <a href="{% url 'signup' %}"
+                       class="text-indigo-500">
+                        signup for a new account
+                    </a>
+                </span>
+            </div>
+        </div>
+
+        <!-- Login -->
+        <form method="post" class="mt-5">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit"
+                    class="w-full text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-md mt-2">
+                Login
+            </button>
+        </form>
+
+        <!-- Reset password -->
+        <div class="text-center mt-4 mb-10">
+            <span class="text-sm">
+                Did you
+                <a href="{% url 'reset_password' %}"
+                   class="text-indigo-500 text-sm tracking-tight">
+                    forget your password?
+                </a>
+            </span>
+        </div>
+    </div>
+
+{% endblock content %}

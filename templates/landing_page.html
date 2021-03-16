@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+    <section class="text-gray-700 body-font">
+        <div class="container mx-auto flex px-5 py-24 items-center justify-center flex-col">
+
+            <!-- Landing page picture -->
+            <img class="lg:w-2/6 md:w-3/6 w-5/6 mb-10 object-cover object-center rounded"
+                 alt="Lewy bodies disorders analysis tools"
+                 src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR7ixEHozSCFWGvaDxuK9KPZj3mQcRvXwO-0v5NPF5nb-3klsCiUpIl0LQpmGkoKwlmfxI&usqp=CAU">
+                <!-- src="https://dummyimage.com/720x600" -->
+
+            <!-- Landing page introduction -->
+            <div class="text-center lg:w-2/3 w-full">
+
+                <!-- Heading -->
+                <h1 class="title-font sm:text-4xl text-3xl mb-4 font-medium text-gray-900">
+                    Lewy bodies disorders analysis tools
+                </h1>
+
+                <!-- Description -->
+                <p class="mb-8 leading-relaxed">
+                    Diagnostics of Lewy body diseases in prodromal stage based on multimodal data analysis (decision support system)
+                </p>
+
+                <!-- Login -->
+                <div class="flex justify-center">
+                    <a href="{% url 'login' %}"
+                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-6 mx-1 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                        Login
+                    </a>
+                    <a href="{% url 'signup' %}"
+                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-6 mx-1 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                        Signup
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock content %}

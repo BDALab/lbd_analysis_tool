@@ -1,0 +1,5 @@
+table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sorttable_nosort):after {
+    content: "\25C2\25B8";
+    opacity: .75!important;
+    margin-left: 2;
+}
