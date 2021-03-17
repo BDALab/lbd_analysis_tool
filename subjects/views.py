@@ -326,8 +326,8 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
         context = super(SessionDataQuestionnaireDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        questionnaire_data = DataQuestionnaire.objects.get(examination_session=self.object.id)
-        questionnaire_data = questionnaire_data if questionnaire_data else None
+        questionnaire_data = DataQuestionnaire.objects.filter(examination_session=self.object.id)
+        questionnaire_data = questionnaire_data.first() if questionnaire_data else None
 
         # Prepare the questionnaire data
         if questionnaire_data:
