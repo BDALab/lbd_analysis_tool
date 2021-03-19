@@ -16,7 +16,7 @@
                             <div class="flex">
 
                                 <!-- Create a new subject -->
-                                <a class="flex text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
+                                <a class="flex items-center text-center text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
                                    href="{% url 'subjects:subject_create' %}">
                                     Create subject
                                 </a>
@@ -24,10 +24,10 @@
                                 <!-- Subjects information -->
                                 <div class="flex ml-3 mt-2">
                                     {% if paginator.count > 1 %}
-                                        <p>There are <b>{{ paginator.count }}</b> subjects in total ({{ paginator.per_page }} per page)</p>
+                                        <p>There are <b>{{ paginator.count }}</b> subjects ({{ paginator.per_page }} per page)</p>
                                     {% else %}
                                         {% if paginator.count > 0 %}
-                                            <p>There is <b>{{ paginator.count }}</b> subject so far ({{ paginator.per_page }} per page)</p>
+                                            <p>There is <b>{{ paginator.count }}</b> subject</p>
                                         {% else %}
                                             <p>There are <b>no</b> subjects</p>
                                         {% endif %}
@@ -35,7 +35,7 @@
                                 </div>
 
                                 <!-- Full-text search -->
-                                <div class="flex mt-1 mb-1 ml-auto">
+                                <div class="flex items-center mt-1 mb-1 ml-auto">
                                     <div class="relative">
                                         <form action="{% url 'subjects:subject_list' %}" method="get">
                                             <div class="relative text-gray-600 focus-within:text-gray-400">
@@ -61,6 +61,12 @@
                                         </form>
                                     </div>
                                 </div>
+
+                                <!-- Reset -->
+                                <a class="flex items-center text-center bg-gray-100 border-0 py-2 px-6 focus:outline-none hover:bg-gray-200 rounded text-gray-600"
+                                   href="{% url 'subjects:subject_list' %}">
+                                    Reset filter
+                                </a>
 
                             </div>
 
