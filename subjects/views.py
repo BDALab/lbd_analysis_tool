@@ -225,6 +225,10 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
         # Add the acoustic data
         context.update({'acoustic_data': acoustic_data})
 
+        # Filter the acoustic data
+        if acoustic_data and self.request.GET.get('q'):
+            acoustic_data = [data for data in acoustic_data if self.request.GET.get('q') in data.get('label')]
+
         # Add the pagination if there are any loaded acoustic data
         if acoustic_data:
             paginator = Paginator(acoustic_data, self.paginate_by)
