@@ -49,6 +49,19 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
         else:
             return Subject.objects.filter(organization=self.request.user.organization).order_by('code')
 
+    def get_context_data(self, **kwargs):
+        """Enrich the context with additional data"""
+
+        # Get the context
+        context = super(SubjectListView, self).get_context_data(**kwargs)
+
+        # Add the examination session
+        if self.request.GET.get('q'):
+            context.update({'q': self.request.GET.get('q')})
+
+        # Return the updated context
+        return context
+
 
 class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
     """Class implementing subject detail view"""
@@ -225,9 +238,10 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
         # Add the acoustic data
         context.update({'acoustic_data': acoustic_data})
 
-        # Filter the acoustic data
+        # Filter the acoustic data and add the filtration into the context
         if acoustic_data and self.request.GET.get('q'):
             acoustic_data = [data for data in acoustic_data if self.request.GET.get('q') in data.get('label')]
+            context.update({'q': self.request.GET.get('q')})
 
         # Add the pagination if there are any loaded acoustic data
         if acoustic_data:

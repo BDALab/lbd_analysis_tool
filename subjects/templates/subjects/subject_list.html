@@ -54,10 +54,17 @@
                                                         </svg>
                                                     </button>
                                                 </span>
-                                                <input type="text"
-                                                       name="q"
-                                                       class="py-2 ml-1 text-sm text-gray-700 bg-white rounded-md pl-10 focus:outline-none focus:shadow-outline focus:text-gray-900"
-                                                       placeholder="Search...">
+                                                {% if q %}
+                                                    <input type="text"
+                                                           name="q"
+                                                           class="py-2 ml-1 text-sm text-gray-600 bg-white rounded-md pl-10 focus:outline-none focus:shadow-outline focus:text-gray-800"
+                                                           value="{{ q }}">
+                                                {% else %}
+                                                    <input type="text"
+                                                           name="q"
+                                                           class="py-2 ml-1 text-sm text-gray-600 bg-white rounded-md pl-10 focus:outline-none focus:shadow-outline focus:text-gray-800"
+                                                           placeholder="Search...">
+                                                {% endif %}
                                             </div>
                                         </form>
                                     </div>
