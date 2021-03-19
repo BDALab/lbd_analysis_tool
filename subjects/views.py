@@ -42,7 +42,12 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        return Subject.objects.filter(organization=self.request.user.organization).order_by('code')
+        if self.request.GET.get('q'):
+            subjects = Subject.objects.filter(organization=self.request.user.organization).order_by('code')
+            subjects = subjects.filter(code__contains=self.request.GET.get('q'))
+            return subjects
+        else:
+            return Subject.objects.filter(organization=self.request.user.organization).order_by('code')
 
 
 class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
