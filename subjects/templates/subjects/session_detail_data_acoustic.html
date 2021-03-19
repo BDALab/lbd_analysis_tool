@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load template_helpers %}
 
 {% block content %}
 
@@ -182,7 +183,7 @@
                                  <!-- First page arrow -->
                                 {% if page_obj.number|add:'-2' > 1 %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page=1">
+                                        <a href="{% relative_url 1 'page' request.GET.urlencode %}">
                                             <svg width="100%"
                                                  height="100%"
                                                  fill="none"
@@ -201,7 +202,7 @@
                                 <!-- Previous pages three dots -->
                                 {% if page_obj.number|add:'-3' > 1 %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page={{ page_obj.number|add:'-3' }}">
+                                        <a href="{% relative_url page_obj.number|add:'-3' 'page' request.GET.urlencode %}">
                                             <svg width="16"
                                                  height="16"
                                                  fill="currentColor"
@@ -227,7 +228,7 @@
                                     <!-- Surrounding pages -->
                                     {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
                                         <div class="w-12 md:flex justify-center items-center hidden cursor-pointer leading-5 transition duration-150 ease-in rounded-full transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                            <a href="?page={{ i }}">
+                                            <a href="{% relative_url i 'page' request.GET.urlencode %}">
                                                 {{ i }}
                                             </a>
                                         </div>
@@ -241,7 +242,7 @@
                                 <!-- Next pages three dots -->
                                 {% if page_obj.paginator.num_pages > page_obj.number|add:'3' %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page={{ page_obj.number|add:'3' }}">
+                                        <a href="{% relative_url page_obj.number|add:'3' 'page' request.GET.urlencode %}">
                                             <svg width="16"
                                                  height="16"
                                                  fill="currentColor"
@@ -256,7 +257,7 @@
                                 <!-- Last page arrow -->
                                 {% if page_obj.paginator.num_pages > page_obj.number|add:'2' %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page={{ page_obj.paginator.num_pages }}">
+                                        <a href="{% relative_url page_obj.paginator.num_pages 'page' request.GET.urlencode %}">
                                             <svg width="100%"
                                                  height="100%"
                                                  fill="none"
