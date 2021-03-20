@@ -4,7 +4,8 @@ from .models import (
     Organization,
     Subject,
     ExaminationSession,
-    DataAcoustic
+    DataAcoustic,
+    DataQuestionnaire
 )
 
 
@@ -14,3 +15,4 @@ admin.site.register(Organization)
 admin.site.register(Subject)
 admin.site.register(ExaminationSession)
 admin.site.register(DataAcoustic)
+admin.site.register(DataQuestionnaire)
