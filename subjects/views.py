@@ -42,15 +42,21 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
     paginate_by = 5
 
     def get_queryset(self):
-        if self.request.GET.get('q'):
-            subjects = Subject.objects.filter(organization=self.request.user.organization).order_by('code')
-            subjects = subjects.filter(code__contains=self.request.GET.get('q'))
-            return subjects
+        """Gets the queryset to be returned"""
+
+        # Get the non-filtered queryset (no search applied over the subjects)
+        if not self.request.GET.get('q'):
+            return Subject.get_subjects(self.request.user.organization, order_by=('code',))
+
+        # Get the filtered queryset
         else:
-            return Subject.objects.filter(organization=self.request.user.organization).order_by('code')
+            return Subject.get_subjects_filtered(
+                organization=self.request.user.organization,
+                search_phrase=self.request.GET.get('q'),
+                order_by=('code',))
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SubjectListView, self).get_context_data(**kwargs)
@@ -77,16 +83,18 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'subject'
 
     def get_queryset(self):
-        return Subject.objects.filter(organization=self.request.user.organization)
+        """Gets the queryset to be returned"""
+        return Subject.get_subjects(self.request.user.organization)
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SubjectDetailView, self).get_context_data(**kwargs)
 
         # Add the examination session
-        context.update({'examination_sessions': ExaminationSession.objects.filter(subject=self.object.id)})
+        sessions = ExaminationSession.get_sessions(subject=self.object.id, order_by=('session_number',))
+        context.update({'examination_sessions': sessions})
 
         # Return the updated context
         return context
@@ -119,6 +127,7 @@ class SubjectCreateView(LoginRequiredMixin, generic.CreateView):
         return super(SubjectCreateView, self).form_valid(form)
 
     def get_success_url(self):
+        """Returns the success URL"""
         return reverse_lazy('subjects:subject_detail', kwargs={'code': self.object.code})
 
     def set_organization(self, subject):
@@ -145,9 +154,11 @@ class SubjectUpdateView(LoginRequiredMixin, generic.UpdateView):
     form_class = SubjectModelForm
 
     def get_queryset(self):
-        return Subject.objects.filter(organization=self.request.user.organization)
+        """Gets the queryset to be returned"""
+        return Subject.get_subjects(self.request.user.organization)
 
     def get_success_url(self):
+        """Returns the success URL"""
         return reverse('subjects:subject_detail', kwargs={'code': self.object.code})
 
 
@@ -162,9 +173,11 @@ class SubjectDeleteView(LoginRequiredMixin, generic.DeleteView):
     slug_url_kwarg = 'code'
 
     def get_queryset(self):
-        return Subject.objects.filter(organization=self.request.user.organization)
+        """Gets the queryset to be returned"""
+        return Subject.get_subjects(self.request.user.organization)
 
     def get_success_url(self):
+        """Returns the success URL"""
         return reverse('subjects:subject_list')
 
 
@@ -182,16 +195,17 @@ def create_session(request, code):
     """
 
     # Fetch the user or raise 404 error if non-existent
-    subject = get_object_or_404(Subject, code=code)
+    subject = Subject.get_subject(code=code)
 
     # Get the last session
-    last_session = ExaminationSession.objects.filter(subject=subject).last()
+    last_session = ExaminationSession.get_sessions(subject=subject).last()
 
     # Get the new session number
     session_number = last_session.session_number + 1 if last_session else 1
 
     # Create and save a new session
-    ExaminationSession(subject=subject, session_number=session_number).save()
+    session = ExaminationSession(subject=subject, session_number=session_number)
+    session.save()
 
     # Redirect back to the subject detail view
     return HttpResponseRedirect(
@@ -219,17 +233,17 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
     paginate_by = 5
 
     def get_queryset(self):
-        return ExaminationSession.objects.filter(subject=get_object_or_404(Subject, code=self.kwargs.get('code')))
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SessionDataAcousticDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        acoustic_data = DataAcoustic.objects.filter(examination_session=self.object.id)
-        acoustic_data = acoustic_data if acoustic_data else None
+        acoustic_data = DataAcoustic.get_data(examination_session=self.object.id)
 
         # Prepare the acoustic data
         if acoustic_data:
@@ -262,11 +276,11 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
 class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
     """Class implementing session: acoustic data update view"""
 
-    # Define the model name
-    model = DataAcoustic
-
     # Define the template name
     template_name = 'subjects/session_update_data_acoustic.html'
+
+    # Define the model name
+    model = DataAcoustic
 
     # Define the form class
     form_class = DataAcousticForm
@@ -288,10 +302,8 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
         """Sets the session for a given data after creating"""
 
         # Get the examination session for given URL parameters
-        session = get_object_or_404(
-            ExaminationSession,
-            subject=get_object_or_404(Subject, code=self.kwargs.get('code')),
-            session_number=self.kwargs.get('session_number'))
+        subject = Subject.get_subject(code=self.kwargs.get('code'))
+        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
 
         # Update the examination session
         data.examination_session = session
@@ -300,21 +312,20 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
         return data
 
     def get_success_url(self):
+        """Returns the success URL"""
         return reverse_lazy(
             'subjects:session_detail_data_acoustic',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SessionDataAcousticUpdateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        session = get_object_or_404(
-            ExaminationSession,
-            subject=get_object_or_404(Subject, code=self.kwargs.get('code')),
-            session_number=self.kwargs.get('session_number'))
+        subject = Subject.get_subject(code=self.kwargs.get('code'))
+        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
 
         # Add the examination session
         context.update({'session': session})
@@ -340,17 +351,17 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
     paginate_by = 5
 
     def get_queryset(self):
-        return ExaminationSession.objects.filter(subject=get_object_or_404(Subject, code=self.kwargs.get('code')))
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SessionDataQuestionnaireDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        questionnaire_data = DataQuestionnaire.objects.filter(examination_session=self.object.id)
-        questionnaire_data = questionnaire_data.first() if questionnaire_data else None
+        questionnaire_data = DataQuestionnaire.get_data(examination_session=self.object.id)
 
         # Prepare the questionnaire data
         if questionnaire_data:
@@ -387,9 +398,8 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
     # Define the template name
     template_name = 'subjects/session_create_data_questionnaire.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the model name
+    model = DataQuestionnaire
 
     # Define the form class
     form_class = DataQuestionnaireForm
@@ -408,21 +418,20 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
         return super(SessionDataQuestionnaireCreateView, self).form_valid(form)
 
     def get_success_url(self):
+        """Returns the success URL"""
         return reverse_lazy(
             'subjects:session_detail_data_questionnaire',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SessionDataQuestionnaireCreateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        session = get_object_or_404(
-            ExaminationSession,
-            subject=get_object_or_404(Subject, code=self.kwargs.get('code')),
-            session_number=self.kwargs.get('session_number'))
+        subject = Subject.get_subject(code=self.kwargs.get('code'))
+        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
 
         # Add the examination session
         context.update({'session': session})
@@ -434,10 +443,8 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
         """Sets the session for a given data after creating"""
 
         # Get the examination session for given URL parameters
-        session = get_object_or_404(
-            ExaminationSession,
-            subject=get_object_or_404(Subject, code=self.kwargs.get('code')),
-            session_number=self.kwargs.get('session_number'))
+        subject = Subject.get_subject(code=self.kwargs.get('code'))
+        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
 
         # Update the examination session
         data.examination_session = session
@@ -452,27 +459,31 @@ class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView)
     # Define the template name
     template_name = 'subjects/session_update_data_questionnaire.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the model
+    model = DataQuestionnaire
 
     # Define the form class
     form_class = DataQuestionnaireForm
 
-    def get_queryset(self):
-        return ExaminationSession.objects.filter(subject=get_object_or_404(Subject, code=self.kwargs.get('code')))
+    def get_object(self, queryset=None):
+        """Gets the object to be returned"""
+
+        # Get the examination session for given URL parameters
+        subject = Subject.get_subject(code=self.kwargs.get('code'))
+        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
+
+        # Return the object
+        return DataQuestionnaire.get_data(examination_session=session)
 
     def get_context_data(self, **kwargs):
-        """Enrich the context with additional data"""
+        """Enriches the context with additional data"""
 
         # Get the context
         context = super(SessionDataQuestionnaireUpdateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        session = get_object_or_404(
-            ExaminationSession,
-            subject=get_object_or_404(Subject, code=self.kwargs.get('code')),
-            session_number=self.kwargs.get('session_number'))
+        subject = Subject.get_subject(code=self.kwargs.get('code'))
+        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
 
         # Add the examination session
         context.update({'session': session})
@@ -481,6 +492,7 @@ class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView)
         return context
 
     def get_success_url(self):
+        """Returns the success URL"""
         return reverse_lazy(
             'subjects:session_detail_data_questionnaire',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})

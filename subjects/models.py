@@ -2,6 +2,7 @@ import csv
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
+from django.shortcuts import get_object_or_404
 
 
 # ------ #
@@ -45,6 +46,63 @@ class Subject(models.Model):
     def __str__(self):
         return f'Subject: {self.code}'
 
+    @staticmethod
+    def get_subjects(organization, order_by=()):
+        """
+        Returns subjects according to the input attributes.
+
+        :param organization: organization name of the subjects
+        :type organization: str
+        :param order_by: ordering of the subjects
+        :type order_by: tuple, optional
+        :return: fetched subjects
+        :rtype: QuerySet
+        """
+        if order_by:
+            return Subject.objects.filter(organization=organization).order_by(*order_by)
+        else:
+            return Subject.objects.filter(organization=organization)
+
+    @staticmethod
+    def get_subjects_filtered(organization, search_phrase, order_by=()):
+        """
+        Returns subjects according to the input attributes.
+
+        :param organization: organization name of the subjects
+        :type organization: str
+        :param search_phrase: search phrase to filter the subjects
+        :type search_phrase: str
+        :param order_by: ordering of the subjects
+        :type order_by: tuple, optional
+        :return: fetched subjects
+        :rtype: QuerySet
+        """
+        return Subject.get_subjects(organization, order_by=order_by).filter(code__contains=search_phrase)
+
+    @staticmethod
+    def get_subject(pk=None, code=None):
+        """
+        Returns the subject according to the input attributes.
+
+        :param pk: primary key of the subject
+        :type pk: uuid (database specific), optional
+        :param code: code of the subject
+        :type code: str, optional
+        :return: fetched subject
+        :rtype: Record
+        """
+
+        # Validate the input arguments
+        if not any((pk, code)):
+            raise ValueError(f"Not enough information to get a subject")
+
+        # Return the subject
+        else:
+            if pk:
+                return get_object_or_404(Subject, id=pk)
+            else:
+                return get_object_or_404(Subject, code=code)
+
 
 class ExaminationSession(models.Model):
     """Class implementing examination session model"""
@@ -59,8 +117,86 @@ class ExaminationSession(models.Model):
     def __str__(self):
         return f'{self.session_number}. session for subject: {self.subject.code}'
 
+    @staticmethod
+    def get_sessions(subject, order_by=()):
+        """
+        Returns sessions according to the input attributes.
 
-class DataAcoustic(models.Model):
+        :param subject: subject record
+        :type subject: Record
+        :param order_by: ordering of the sessions
+        :type order_by: tuple, optional
+        :return: fetched sessions
+        :rtype: QuerySet
+        """
+        if order_by:
+            return ExaminationSession.objects.filter(subject=subject).order_by(*order_by)
+        else:
+            return ExaminationSession.objects.filter(subject=subject)
+
+    @staticmethod
+    def get_session(pk=None, subject=None, session_number=None):
+        """
+        Returns the session according to the input attributes.
+
+        :param pk: primary key of the session
+        :type pk: uuid (database specific), optional
+        :param subject: subject record
+        :type subject: Record, optional
+        :param session_number: session number
+        :type session_number: int, optional
+        :return: fetched session
+        :rtype: Record
+        """
+
+        # Validate the input arguments
+        if not any((pk, all((subject, session_number)))):
+            raise ValueError(f"Not enough information to get a session")
+
+        # Return the session
+        else:
+            if pk:
+                return get_object_or_404(ExaminationSession, id=pk)
+            else:
+                return get_object_or_404(ExaminationSession, subject=subject, session_number=session_number)
+
+
+class CommonExaminationSessionData(models.Model):
+    """Base class for examination session data (structured and unstructured)"""
+
+    class Meta:
+        """Meta class definition"""
+        abstract = True
+
+    @classmethod
+    def get_data(cls, pk=None, examination_session=None):
+        """
+        Returns the data according to the input attributes.
+
+        :param pk: primary key of the data
+        :type pk: uuid (database specific), optional
+        :param examination_session: session record
+        :type examination_session: Record, optional
+        :return: fetched data
+        :rtype: Record
+        """
+
+        # Validate the input arguments
+        if not any((pk, examination_session)):
+            raise ValueError(f"Not enough information to get data")
+
+        # Fetch the data
+        else:
+            if pk:
+                record = cls.objects.filter(id=pk)
+            else:
+                record = cls.objects.filter(examination_session=examination_session)
+
+        # Return the data
+        return record.last() if record else None
+
+
+class DataAcoustic(CommonExaminationSessionData):
     """Class implementing acoustic data model"""
 
     # Define the model schema
@@ -74,12 +210,12 @@ class DataAcoustic(models.Model):
         return f'Acoustic data for {self.examination_session.session_number}. session'
 
     @staticmethod
-    def read_file(records):
+    def read_file(record):
         """
         Reads the acoustic data from the provided database records.
 
-        :param records: acoustic data records
-        :type records: query set
+        :param record: acoustic data record
+        :type record: Record
         :return: acoustic data (feature labels, feature values)
         :rtype: list of dicts
         """
@@ -89,7 +225,7 @@ class DataAcoustic(models.Model):
         feature_values = []
 
         # Read the acoustic data (feature names and feature values themselves)
-        with open(records.last().data.path, 'r') as csv_file:
+        with open(record.data.path, 'r') as csv_file:
             for i, row in enumerate(csv.reader(csv_file, delimiter=','), 1):
                 if i == 1:
                     feature_labels = row
@@ -106,7 +242,7 @@ class DataAcoustic(models.Model):
         return acoustic_data
 
 
-class DataQuestionnaire(models.Model):
+class DataQuestionnaire(CommonExaminationSessionData):
     """Class implementing questionnaire data model"""
 
     # Define the questions
@@ -126,7 +262,7 @@ class DataQuestionnaire(models.Model):
     Q5_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
 
     # Define the model schema
-    examination_session = models.ForeignKey('ExaminationSession', on_delete=models.CASCADE)
+    examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE)
     description = models.CharField('description', max_length=255, blank=True)
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)

@@ -240,7 +240,7 @@
 
                 {% endif %}
 
-                <!-- Upload data -->
+                <!-- Update data -->
                 <div class="flex justify-center mx-auto mt-5 mb-4">
                     <a href="{% url 'subjects:session_update_data_questionnaire' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
@@ -250,12 +250,12 @@
 
             {% else %}
 
-                <!-- Upload data information -->
+                <!-- Create data information -->
                 <div class="flex flex-col text-center w-full mt-5 mb-4 text-gray-700">
                     <p class="font-medium">There are no data so far</p>
                 </div>
 
-                <!-- Upload data -->
+                <!-- Create data -->
                 <div class="flex justify-center mx-auto">
                     <a href="{% url 'subjects:session_create_data_questionnaire' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
