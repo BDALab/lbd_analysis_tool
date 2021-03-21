@@ -475,22 +475,6 @@ class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView)
         # Return the object
         return DataQuestionnaire.get_data(examination_session=session)
 
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataQuestionnaireUpdateView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        subject = Subject.get_subject(code=self.kwargs.get('code'))
-        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
-
-        # Add the examination session
-        context.update({'session': session})
-
-        # Return the updated context
-        return context
-
     def get_success_url(self):
         """Returns the success URL"""
         return reverse_lazy(

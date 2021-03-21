@@ -17,7 +17,7 @@
             <div class="mt-2">
                 <span class="text-sm">
                     or go back to the
-                    <a href="{% url 'subjects:session_detail_data_questionnaire' session.subject.code session.session_number %}"
+                    <a href="{% url 'subjects:session_detail_data_questionnaire' object.examination_session.subject.code object.examination_session.session_number %}"
                        class="text-indigo-500">
                         examination session
                     </a>
