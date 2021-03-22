@@ -5,10 +5,6 @@ from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
 
 
-# ------ #
-# Models #
-# ------ #
-
 class User(AbstractUser):
     """Class implementing user model"""
 
@@ -135,7 +131,7 @@ class ExaminationSession(models.Model):
             return ExaminationSession.objects.filter(subject=subject)
 
     @staticmethod
-    def get_session(pk=None, subject=None, session_number=None):
+    def get_session(pk=None, subject=None, subject_code=None, session_number=None):
         """
         Returns the session according to the input attributes.
 
@@ -143,6 +139,8 @@ class ExaminationSession(models.Model):
         :type pk: uuid (database specific), optional
         :param subject: subject record
         :type subject: Record, optional
+        :param subject_code: subject code,
+        :type subject_code: str, optional
         :param session_number: session number
         :type session_number: int, optional
         :return: fetched session
@@ -150,7 +148,7 @@ class ExaminationSession(models.Model):
         """
 
         # Validate the input arguments
-        if not any((pk, all((subject, session_number)))):
+        if not any((pk, all((any((subject, subject_code)), session_number)))):
             raise ValueError(f"Not enough information to get a session")
 
         # Return the session
@@ -158,7 +156,12 @@ class ExaminationSession(models.Model):
             if pk:
                 return get_object_or_404(ExaminationSession, id=pk)
             else:
-                return get_object_or_404(ExaminationSession, subject=subject, session_number=session_number)
+                if subject:
+                    return get_object_or_404(ExaminationSession, subject=subject, session_number=session_number)
+                else:
+                    subject = Subject.get_subject(code=subject_code)
+                    session = ExaminationSession.get_session(subject=subject, session_number=session_number)
+                    return session
 
 
 class CommonExaminationSessionData(models.Model):

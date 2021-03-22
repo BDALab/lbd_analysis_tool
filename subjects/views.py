@@ -301,12 +301,10 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
     def set_session(self, data):
         """Sets the session for a given data after creating"""
 
-        # Get the examination session for given URL parameters
-        subject = Subject.get_subject(code=self.kwargs.get('code'))
-        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
-
         # Update the examination session
-        data.examination_session = session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
 
         # Return the updated data
         return data
@@ -324,8 +322,9 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
         context = super(SessionDataAcousticUpdateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        subject = Subject.get_subject(code=self.kwargs.get('code'))
-        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
 
         # Add the examination session
         context.update({'session': session})
@@ -430,8 +429,9 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
         context = super(SessionDataQuestionnaireCreateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        subject = Subject.get_subject(code=self.kwargs.get('code'))
-        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
 
         # Add the examination session
         context.update({'session': session})
@@ -442,12 +442,10 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
     def set_session(self, data):
         """Sets the session for a given data after creating"""
 
-        # Get the examination session for given URL parameters
-        subject = Subject.get_subject(code=self.kwargs.get('code'))
-        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
-
         # Update the examination session
-        data.examination_session = session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
 
         # Return the updated data
         return data
@@ -469,8 +467,9 @@ class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView)
         """Gets the object to be returned"""
 
         # Get the examination session for given URL parameters
-        subject = Subject.get_subject(code=self.kwargs.get('code'))
-        session = ExaminationSession.get_session(subject=subject, session_number=self.kwargs.get('session_number'))
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
 
         # Return the object
         return DataQuestionnaire.get_data(examination_session=session)
