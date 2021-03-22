@@ -75,6 +75,19 @@
 
             </div>
 
+            <!-- Go to the subject detail -->
+            <div class="flex flex-col text-center w-full">
+                <div class="mt-2">
+                    <span class="text-sm">
+                        go back to the
+                        <a href="{% url 'subjects:subject_detail' session.subject.code %}"
+                           class="text-indigo-500">
+                            subject detail
+                        </a>
+                    </span>
+                </div>
+            </div>
+
             <!-- If there are any loaded acoustic data, show the table -->
             {% if acoustic_data %}
 

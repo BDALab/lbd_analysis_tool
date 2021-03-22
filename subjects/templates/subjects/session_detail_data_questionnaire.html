@@ -76,6 +76,19 @@
 
             </div>
 
+            <!-- Go to the subject detail -->
+            <div class="flex flex-col text-center w-full">
+                <div class="mt-2">
+                    <span class="text-sm">
+                        go back to the
+                        <a href="{% url 'subjects:subject_detail' session.subject.code %}"
+                           class="text-indigo-500">
+                            subject detail
+                        </a>
+                    </span>
+                </div>
+            </div>
+
             <!-- If there are any loaded questionnaire data, show the table -->
             {% if questionnaire_data %}
                 <div class="mx-auto flex flex-wrap flex-col">
