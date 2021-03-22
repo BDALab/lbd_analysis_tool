@@ -3,3 +3,19 @@ table.sortable th:not(.sorttable_sorted):not(.sorttable_sorted_reverse):not(.sor
     opacity: .75!important;
     margin-left: 2;
 }
+
+
+/* Turn off: highlights taps on links on Android devices: https://css-tricks.com/custom-tailwind-css/ */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+
+/* Handles problems with bottom bar on newer iPhones without the “Home” button: https://css-tricks.com/custom-tailwind-css/ */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
