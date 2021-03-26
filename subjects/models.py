@@ -25,6 +25,12 @@ class Organization(models.Model):
 class Subject(models.Model):
     """Class implementing subject model"""
 
+    class Meta:
+        """Model meta information definition"""
+
+        # Default ordering of the records
+        ordering = ['code']
+
     # Define the sex options for each subject
     SEX = [('M', 'Male'), ('F', 'Female')]
 
@@ -102,6 +108,12 @@ class Subject(models.Model):
 
 class ExaminationSession(models.Model):
     """Class implementing examination session model"""
+
+    class Meta:
+        """Model meta information definition"""
+
+        # Default ordering of the records
+        ordering = ['session_number']
 
     # Define the model schema
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
