@@ -6,7 +6,6 @@ from django.contrib import admin
 
 # Import the auth view
 from django.contrib.auth.views import (
-    LoginView,
     LogoutView,
     PasswordResetView,
     PasswordResetDoneView,
@@ -15,15 +14,15 @@ from django.contrib.auth.views import (
 )
 
 # Import the subjects app views
-from subjects.views import LandingPageView, SignupView
+from subjects.views import LandingPageView, SignupView, SigninView
 
 
 # Define the URL patterns
 urlpatterns = [
     path('', LandingPageView.as_view(), name='landing_page'),
-    path('signup', SignupView.as_view(), name='signup'),
-    path('login', LoginView.as_view(), name='login'),
-    path('logout', LogoutView.as_view(), name='logout'),
+    path('signup/', SignupView.as_view(), name='signup'),
+    path('login/', SigninView.as_view(), name='login'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('reset-password/', PasswordResetView.as_view(), name='reset_password'),
     path('password-reset-done/', PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('password-reset-confirm/<uidb64>/<token>/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),

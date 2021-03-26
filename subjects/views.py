@@ -1,12 +1,27 @@
 from django.http import HttpResponseRedirect
-from django.shortcuts import reverse, get_object_or_404
+from django.shortcuts import reverse, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
 from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
 from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm
+
+
+class SigninView(LoginView):
+    """Class implementing signin view"""
+
+    # Define the template name
+    template_name = 'registration/login.html'
+
+    # Define the authenticated user redirection
+    redirect_authenticated_user = True
+
+    def get_success_url(self):
+        """Returns the success URL"""
+        return reverse_lazy('subjects:subject_list')
 
 
 class SignupView(generic.CreateView):
@@ -18,8 +33,19 @@ class SignupView(generic.CreateView):
     # Define the form class
     form_class = CustomUserCreationForm
 
+    def get(self, *args, **kwargs):
+        """Authenticated user hook: gets redirected to a list of subjects"""
+
+        # If a user is already authenticated, redirect him/her to the list of subjects
+        if self.request.user.is_authenticated:
+            return redirect('subjects:subject_list')
+
+        # Otherwise, proceed as usual
+        return super(SignupView, self).get(*args, **kwargs)
+
     def get_success_url(self):
-        return reverse('login')
+        """Returns the success URL"""
+        return reverse_lazy('login')
 
 
 class LandingPageView(generic.TemplateView):
@@ -159,7 +185,7 @@ class SubjectUpdateView(LoginRequiredMixin, generic.UpdateView):
 
     def get_success_url(self):
         """Returns the success URL"""
-        return reverse('subjects:subject_detail', kwargs={'code': self.object.code})
+        return reverse_lazy('subjects:subject_detail', kwargs={'code': self.object.code})
 
 
 class SubjectDeleteView(LoginRequiredMixin, generic.DeleteView):
@@ -178,7 +204,7 @@ class SubjectDeleteView(LoginRequiredMixin, generic.DeleteView):
 
     def get_success_url(self):
         """Returns the success URL"""
-        return reverse('subjects:subject_list')
+        return reverse_lazy('subjects:subject_list')
 
 
 @login_required(login_url='/login')
