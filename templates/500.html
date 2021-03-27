@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+    <section class="text-gray-700 body-font">
+        <div class="container mx-auto flex px-5 py-24 items-center justify-center flex-col">
+            <div class="text-center w-full">
+
+                <!-- 500 -->
+                <div class="text-5xl font-dark font-bold mb-2">500</div>
+
+                <!-- Explanation -->
+                <p class="text-2xl md:text-3xl font-light leading-normal">
+                    Sorry, our servers have problems
+                </p>
+                <p class="mb-4">
+                    Please don't hesitate to contact us at any time
+                </p>
+
+                <!-- Back to homepage -->
+                <div class="flex justify-center">
+                    <a href="{% url 'landing_page' %}"
+                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-6 mx-1 focus:outline-none hover:bg-indigo-600 rounded text-lg">
+                        Back to homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+{% endblock content %}
