@@ -183,63 +183,78 @@ class CommonExaminationSessionData(models.Model):
         """Meta class definition"""
         abstract = True
 
+    # Define the model schema
+    examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE)
+    description = models.CharField('description', max_length=255, blank=True)
+    created_on = models.DateField('created on', auto_now_add=True)
+    updated_on = models.DateField('updated on', auto_now=True)
+
     @classmethod
-    def get_data(cls, pk=None, examination_session=None):
+    def get_data(cls, pk=None, examination_session=None, subject_code=None, session_number=None):
         """
         Returns the data according to the input attributes.
+
+        Use-cases:
+         1. get_data(pk)
+            reads the record using its primary key
+         2. get_data(examination_session)
+            reads data using the foreign key to its examination session
+         3. get_data(subject_code, session_number)
+            reads data using the subject code and the session number
 
         :param pk: primary key of the data
         :type pk: uuid (database specific), optional
         :param examination_session: session record
         :type examination_session: Record, optional
+        :param subject_code: subject code,
+        :type subject_code: str, optional
+        :param session_number: session number
+        :type session_number: int, optional
         :return: fetched data
         :rtype: Record
         """
 
         # Validate the input arguments
-        if not any((pk, examination_session)):
+        if not any((pk, examination_session, all((subject_code, session_number)))):
             raise ValueError(f"Not enough information to get data")
 
         # Fetch the data
+        if not any((pk, examination_session)):
+            session = ExaminationSession.get_session(subject_code=subject_code, session_number=session_number)
+            fetched = cls.objects.filter(examination_session=session)
         else:
             if pk:
-                record = cls.objects.filter(id=pk)
+                fetched = cls.objects.filter(id=pk)
             else:
-                record = cls.objects.filter(examination_session=examination_session)
+                fetched = cls.objects.filter(examination_session=examination_session)
 
         # Return the data
-        return record.last() if record else None
+        return fetched.last() if fetched else None
 
 
-class DataAcoustic(CommonExaminationSessionData):
-    """Class implementing acoustic data model"""
+class CommonFeatureBasedData(CommonExaminationSessionData):
+    """Base class for feature-based examination session data"""
 
-    # Define the model schema
-    examination_session = models.ForeignKey('ExaminationSession', on_delete=models.CASCADE)
-    description = models.CharField('description', max_length=255, blank=True)
-    created_on = models.DateField('created on', auto_now_add=True)
-    updated_on = models.DateField('updated on', auto_now=True)
-    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
-
-    def __str__(self):
-        return f'Acoustic data for {self.examination_session.session_number}. session'
+    class Meta:
+        """Meta class definition"""
+        abstract = True
 
     @staticmethod
     def read_file(record):
         """
-        Reads the acoustic data from the provided database records.
+        Reads the feature-based data from the provided database records.
 
-        :param record: acoustic data record
+        :param record: feature-based data record
         :type record: Record
-        :return: acoustic data (feature labels, feature values)
+        :return: feature-based data (feature labels, feature values)
         :rtype: list of dicts
         """
 
-        # Prepare the acoustic data
+        # Prepare the data
         feature_labels = []
         feature_values = []
 
-        # Read the acoustic data (feature names and feature values themselves)
+        # Read the data (feature names and feature values themselves)
         with open(record.data.path, 'r') as csv_file:
             for i, row in enumerate(csv.reader(csv_file, delimiter=','), 1):
                 if i == 1:
@@ -247,26 +262,111 @@ class DataAcoustic(CommonExaminationSessionData):
                 if i == 2:
                     feature_values = row
 
-        # Process the acoustic data
-        acoustic_data = [
+        # Process the data and prepare the features
+        features = [
             {'label': label, 'value': value}
             for label, value in zip(feature_labels, feature_values)
         ]
 
-        # Return the acoustic data
-        return acoustic_data
+        # Return the features
+        return features
+
+    @classmethod
+    def prepare_downloadable(cls, record, response):
+        """
+        Prepares the feature-based data to be downloaded.
+
+        :param record: feature-based data record
+        :type record: Record
+        :param response: response to be filled with the feature-based data
+        :type response: HttpResponse
+        :return: response with the inserted data
+        :rtype: HttpResponse
+        """
+
+        # Prepare the CSV writer
+        writer = csv.writer(response)
+
+        # Read the data
+        data = cls.read_file(record)
+
+        # Write the header and the body
+        writer.writerow([element.get('label') for element in data])
+        writer.writerow([element.get('value') for element in data])
+
+        # Return the response
+        return response
 
 
-class DataQuestionnaire(CommonExaminationSessionData):
+class DataAcoustic(CommonFeatureBasedData):
+    """Class implementing acoustic data model"""
+
+    # Define the model schema
+    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
+
+    def __str__(self):
+        return f'Acoustic data for {self.examination_session.session_number}. session'
+
+
+class CommonQuestionnaireBasedData(CommonExaminationSessionData):
+    """Base class for questionnaire-based examination session data"""
+
+    class Meta:
+        """Meta class definition"""
+        abstract = True
+
+    # Define the questions
+    QUESTIONS = []
+
+    # Define the questions statements
+    QUESTIONS_STATEMENTS = {}
+
+    def get_questions(self):
+        return [
+            {'question': self.QUESTIONS_STATEMENTS.get(question, question), 'answer': getattr(self, question)}
+            for question in self.QUESTIONS
+        ]
+
+    @classmethod
+    def prepare_downloadable(cls, record, response):
+        """
+        Prepares the questionnaire-based data to be downloaded.
+
+        :param record: questionnaire-based data record
+        :type record: Record
+        :param response: response to be filled with the questionnaire-based data
+        :type response: HttpResponse
+        :return: response with the inserted data
+        :rtype: HttpResponse
+        """
+
+        # Prepare the CSV writer
+        writer = csv.writer(response)
+
+        # Read the data
+        data = cls.get_questions(record)
+
+        # Write the header and the body
+        writer.writerow([element.get('question') for element in data])
+        writer.writerow([element.get('answer') for element in data])
+
+        # Return the response
+        return response
+
+
+class DataQuestionnaire(CommonQuestionnaireBasedData):
     """Class implementing questionnaire data model"""
 
     # Define the questions
-    QUESTIONS = {
-        "q1": "question 1",
-        "q2": "question 2",
-        "q3": "question 3",
-        "q4": "question 4",
-        "q5": "question 5"
+    QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5']
+
+    # Define the questions statements
+    QUESTIONS_STATEMENTS = {
+        'q1': 'question 1',
+        'q2': 'question 2',
+        'q3': 'question 3',
+        'q4': 'question 4',
+        'q5': 'question 5'
     }
 
     # Define the questionnaire data options
@@ -277,10 +377,6 @@ class DataQuestionnaire(CommonExaminationSessionData):
     Q5_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
 
     # Define the model schema
-    examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE)
-    description = models.CharField('description', max_length=255, blank=True)
-    created_on = models.DateField('created on', auto_now_add=True)
-    updated_on = models.DateField('updated on', auto_now=True)
     q1 = models.PositiveSmallIntegerField('question 1', choices=Q1_OPTIONS, blank=True, null=True)
     q2 = models.PositiveSmallIntegerField('question 2', choices=Q2_OPTIONS, blank=True, null=True)
     q3 = models.PositiveSmallIntegerField('question 3', choices=Q3_OPTIONS, blank=True, null=True)
@@ -289,23 +385,3 @@ class DataQuestionnaire(CommonExaminationSessionData):
 
     def __str__(self):
         return f'Questionnaire data for {self.examination_session.session_number}. session'
-
-    @property
-    def question_1(self):
-        return {"question": self.QUESTIONS["q1"], "answer": self.q1}
-
-    @property
-    def question_2(self):
-        return {"question": self.QUESTIONS["q2"], "answer": self.q2}
-
-    @property
-    def question_3(self):
-        return {"question": self.QUESTIONS["q3"], "answer": self.q3}
-
-    @property
-    def question_4(self):
-        return {"question": self.QUESTIONS["q4"], "answer": self.q4}
-
-    @property
-    def question_5(self):
-        return {"question": self.QUESTIONS["q5"], "answer": self.q5}

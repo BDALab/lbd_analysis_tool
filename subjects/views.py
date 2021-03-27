@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import reverse, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
@@ -213,7 +213,7 @@ def create_session(request, code):
     Creates a new examination session for a requested subject.
 
     :param request: HTTP request
-    :type request: django.core.handlers.wsgi.WSGIRequest
+    :type request: Request
     :param code: code of the subject
     :type code: str
     :return: redirected HTTP response to the subject detail view
@@ -390,13 +390,7 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
 
         # Prepare the questionnaire data
         if questionnaire_data:
-            questionnaire_data = [
-                questionnaire_data.question_1,
-                questionnaire_data.question_2,
-                questionnaire_data.question_3,
-                questionnaire_data.question_4,
-                questionnaire_data.question_5
-            ]
+            questionnaire_data = questionnaire_data.get_questions()
 
         # Add the questionnaire data
         context.update({'questionnaire_data': questionnaire_data})
@@ -505,3 +499,43 @@ class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView)
         return reverse_lazy(
             'subjects:session_detail_data_questionnaire',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+
+
+def export_acoustic_data(request, code, session_number):
+    """Exports the acoustic data in a CSV file"""
+    return _export_data(request, code, session_number, model=DataAcoustic)
+
+
+def export_questionnaire_data(request, code, session_number):
+    """Exports the questionnaire data in a CSV file"""
+    return _export_data(request, code, session_number, model=DataQuestionnaire)
+
+
+def _export_data(request, code, session_number, model):
+    """
+    Exports the data in a CSV file that is downloaded in a browser.
+
+    :param request: HTTP request
+    :type request: Request
+    :param code: code of the subject
+    :type code: str
+    :param session_number: session number
+    :type session_number: str
+    :param model: model to be used to get the data to be exported
+    :type model: Model
+    :return: HTTP response for the data to be exported
+    :rtype: HttpResponse
+    """
+
+    # Prepare the HTTP response and the fetched data to be exported
+    response = HttpResponse(content_type='text/csv')
+    fetched = model.get_data(subject_code=code, session_number=session_number)
+
+    # Prepare the fetched data to be downloadable
+    response = model.prepare_downloadable(record=fetched, response=response)
+
+    # Set the content disposition (to be downloaded by a browser)
+    response['Content-Disposition'] = 'attachment; filename="exported.csv"'
+
+    # Return the HTTP response
+    return response

@@ -10,7 +10,9 @@ from .views import (
     SessionDataQuestionnaireDetailView,
     SessionDataQuestionnaireCreateView,
     SessionDataQuestionnaireUpdateView,
-    create_session
+    create_session,
+    export_acoustic_data,
+    export_questionnaire_data
 )
 
 
@@ -29,11 +31,12 @@ urlpatterns = [
     path('<str:code>/delete/', SubjectDeleteView.as_view(), name='subject_delete'),
 
     # Sessions
-    # 1. acoustic data
-    # 2. questionnaire data
+    path('<str:code>/create_session/', create_session, name='session_create'),
 
     # 1. acoustic data
-    path('<str:code>/create_session/', create_session, name='session_create'),
+    path('<str:code>/session/<int:session_number>/data_acoustic/export',
+         export_acoustic_data,
+         name='export_acoustic_data'),
     path('<str:code>/session/<int:session_number>/data_acoustic/',
          SessionDataAcousticDetailView.as_view(),
          name='session_detail_data_acoustic'),
@@ -42,6 +45,9 @@ urlpatterns = [
          name='session_update_data_acoustic'),
 
     # 2. questionnaire data
+    path('<str:code>/session/<int:session_number>/data_questionnaire/export',
+         export_questionnaire_data,
+         name='export_questionnaire_data'),
     path('<str:code>/session/<int:session_number>/data_questionnaire/',
          SessionDataQuestionnaireDetailView.as_view(),
          name='session_detail_data_questionnaire'),
