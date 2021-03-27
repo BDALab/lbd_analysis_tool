@@ -298,16 +298,6 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
         return response
 
 
-class DataAcoustic(CommonFeatureBasedData):
-    """Class implementing acoustic data model"""
-
-    # Define the model schema
-    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
-
-    def __str__(self):
-        return f'Acoustic data for {self.examination_session.session_number}. session'
-
-
 class CommonQuestionnaireBasedData(CommonExaminationSessionData):
     """Base class for questionnaire-based examination session data"""
 
@@ -322,6 +312,12 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
     QUESTIONS_STATEMENTS = {}
 
     def get_questions(self):
+        """
+        Gets the questions and answers of the given questionnaire.
+
+        :return: questions and answers
+        :rtype: list
+        """
         return [
             {'question': self.QUESTIONS_STATEMENTS.get(question, question), 'answer': getattr(self, question)}
             for question in self.QUESTIONS
@@ -352,6 +348,16 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
 
         # Return the response
         return response
+
+
+class DataAcoustic(CommonFeatureBasedData):
+    """Class implementing acoustic data model"""
+
+    # Define the model schema
+    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
+
+    def __str__(self):
+        return f'Acoustic data for {self.examination_session.session_number}. session'
 
 
 class DataQuestionnaire(CommonQuestionnaireBasedData):
