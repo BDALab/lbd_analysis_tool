@@ -1,3 +1,4 @@
+import logging
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import reverse, redirect
 from django.core.paginator import Paginator
@@ -8,6 +9,10 @@ from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
 from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm
+
+
+# Get the module-level logger instance
+logger = logging.getLogger(__name__)
 
 
 class SigninView(LoginView):
