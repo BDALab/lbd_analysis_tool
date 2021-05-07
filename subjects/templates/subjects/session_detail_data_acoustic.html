@@ -6,10 +6,28 @@
     <section class="text-gray-600 body-font">
         <div class="container px-5 py-24 mx-auto flex flex-wrap flex-col">
 
-            <!-- Session data navbar -->
-            <div class="flex mx-auto flex-wrap mb-5">
+            <!-- Examination information -->
+            <div class="flex flex-col text-center w-full mb-5">
+                <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
+                    Acoustic data
+                </h1>
 
-                <!-- Acoustic data (selected) -->
+                <!-- Go to the session detail -->
+                <div class="mt-2">
+                    <span class="text-sm">
+                        go back to the
+                        <a href="{% url 'subjects:session_detail' session.subject.code session.session_number %}"
+                           class="text-indigo-500">
+                            session detail
+                        </a>
+                    </span>
+                </div>
+
+            </div>
+
+            <!-- Session data navbar -->
+            <!-- <div class="flex mx-auto flex-wrap mb-5">
+
                 <a class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium inline-flex items-center leading-none border-indigo-600 bg-indigo-600 text-white tracking-wider rounded-t">
                     <svg fill="none"
                          stroke="currentColor"
@@ -23,7 +41,6 @@
                     Acoustic
                 </a>
 
-                <!-- Other data -->
                 <a href="{% url 'subjects:session_detail_data_questionnaire' session.subject.code session.session_number %}" class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium bg-gray-100 inline-flex items-center leading-none border-gray-700 text-gray-700 rounded-t transform hover:border-indigo-500 hover:bg-indigo-500 hover:text-white tracking-wider hover:scale-103">
                     <svg fill="none"
                          stroke="currentColor"
@@ -73,20 +90,7 @@
                     STEP 5
                 </a>
 
-            </div>
-
-            <!-- Go to the subject detail -->
-            <div class="flex flex-col text-center w-full">
-                <div class="mt-2">
-                    <span class="text-sm">
-                        go back to the
-                        <a href="{% url 'subjects:subject_detail' session.subject.code %}"
-                           class="text-indigo-500">
-                            subject detail
-                        </a>
-                    </span>
-                </div>
-            </div>
+            </div> -->
 
             <!-- If there are any loaded acoustic data, show the table -->
             {% if acoustic_data %}

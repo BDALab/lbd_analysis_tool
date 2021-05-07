@@ -10,50 +10,56 @@
             <!-- *** -->
             <div class="flex flex-wrap -m-4">
 
-                <!-- Examination sessions information -->
+                <!-- Examinations information -->
                 <div class="flex flex-col text-center w-full mb-5">
                     <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
-                        Examination sessions
+                        Examination session #{{ session.session_number }}
                     </h1>
 
-                    <!-- Go to the list of subjects -->
+                    <!-- Go to the subject -->
                     <div class="mt-2">
                         <span class="text-sm">
                             go back to the
-                            <a href="{% url 'subjects:subject_list' %}"
+                            <a href="{% url 'subjects:subject_detail' session.subject.code %}"
                                class="text-indigo-500">
-                                list of subjects
+                                subject
                             </a>
                         </span>
                     </div>
 
                 </div>
 
-                {% if examination_sessions %}
-                    {% for session in examination_sessions %}
+                {% if examinations %}
+                    {% for examination in examinations %}
 
-                        <!-- Show existing examination sessions -->
+                        <!-- Show existing examination -->
                         <div class="p-4 md:w-1/3">
                             <div class="flex rounded-lg h-full bg-gray-100 p-8 flex-col items-center align-center text-center">
                                 <div class="flex items-center mb-3">
                                     <div class="w-8 h-8 mr-3 inline-flex items-center justify-center rounded-full bg-indigo-500 text-white flex-shrink-0">
-                                        <svg width="16"
+                                        <svg fill="none"
+                                             stroke="currentColor"
+                                             stroke-linecap="round"
+                                             stroke-linejoin="round"
+                                             stroke-width="2"
+                                             class="w-5 h-5"
+                                             viewBox="0 0 24 24">
+                                            <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+                                        </svg>
+                                        <!-- <svg width="16"
                                              height="16"
                                              fill="currentColor"
                                              class="bi bi-bar-chart-fill"
                                              viewBox="0 0 16 16">
                                             <path d="M1 11a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-3zm5-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5-5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2z"/>
-                                        </svg>
+                                        </svg> -->
                                     </div>
                                     <h2 class="text-gray-900 text-lg title-font font-medium">
-                                        Session #{{ session.session_number }}
+                                        {{ examination.name }}
                                     </h2>
                                 </div>
                                 <div class="flex-grow">
-                                    <p class="leading-relaxed text-base">
-                                        {{ session.created_on }}
-                                    </p>
-                                    <a href="{% url 'subjects:session_detail' subject.code forloop.counter %}"
+                                    <a href="{% url 'subjects:'|add:examination.path session.subject.code session.session_number %}"
                                        class="mt-3 text-indigo-500 inline-flex items-center">
                                         View detail
                                         <svg fill="none"
@@ -72,35 +78,13 @@
 
                     {% endfor %}
 
-                    <!-- No sessions information -->
-                    <div class="flex flex-col text-center w-full mt-5 mb-4 text-gray-700">
-                        <p class="font-medium">
-                            Create new examination sessions
-                        </p>
-                    </div>
-
-                    <!-- Create a new session -->
-                    <div class="flex justify-center mx-auto">
-                        <a href="{% url 'subjects:session_create' subject.code %}"
-                           class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
-                            Create a new session
-                        </a>
-                    </div>
-
                 {% else %}
 
                     <!-- No sessions information -->
                     <div class="flex flex-col text-center w-full mt-5 mb-4 text-gray-700">
-                        <p class="font-medium">There are no examination sessions so far</p>
+                        <p class="font-medium">There are no examinations available</p>
                     </div>
 
-                    <!-- Create a new session -->
-                    <div class="flex justify-center mx-auto">
-                        <a href="{% url 'subjects:session_create' subject.code %}"
-                           class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
-                            Create a new session
-                        </a>
-                    </div>
                 {% endif %}
             </div>
         </div>

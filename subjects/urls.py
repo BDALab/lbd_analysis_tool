@@ -5,6 +5,7 @@ from .views import (
     SubjectDetailView,
     SubjectUpdateView,
     SubjectDeleteView,
+    SessionDetailView,
     SessionDataAcousticDetailView,
     SessionDataAcousticUpdateView,
     SessionDataQuestionnaireDetailView,
@@ -32,6 +33,7 @@ urlpatterns = [
 
     # Sessions
     path('<str:code>/create_session/', create_session, name='session_create'),
+    path('<str:code>/session/<int:session_number>/detail/', SessionDetailView.as_view(), name='session_detail'),
 
     # 1. acoustic data
     path('<str:code>/session/<int:session_number>/data_acoustic/export',

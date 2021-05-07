@@ -247,6 +247,54 @@ def create_session(request, code):
     )
 
 
+class SessionDetailView(LoginRequiredMixin, generic.DetailView):
+    """Class implementing session: session data detail view"""
+
+    # Define the template name
+    template_name = 'subjects/session_detail.html'
+
+    # Define the slug attributes to enable filtering based on the specified field
+    slug_field = 'session_number'
+    slug_url_kwarg = 'session_number'
+
+    # Define the context object name
+    context_object_name = 'session'
+
+    # Define the examination session parts (examinations/questionnaires, etc.)
+    # 1. examination name
+    # 2. path name
+    # 3. model
+    examinations = [
+        ('acoustic', 'session_detail_data_acoustic', DataAcoustic),
+        ('questionnaire', 'session_detail_data_questionnaire', DataQuestionnaire)
+    ]
+
+    def get_queryset(self):
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDetailView, self).get_context_data(**kwargs)
+
+        # Get the examinations for the given session
+        examinations = [
+            {'name': name, 'path': path, 'data': model.get_data(examination_session=self.object.id)}
+            for name, path, model in self.examinations
+        ]
+
+        # Add the examinations
+        context.update({'examinations': examinations})
+
+        from pprint import pprint
+        pprint(context)
+
+        # Return the updated context
+        return context
+
+
 class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
     """Class implementing session: acoustic data detail view"""
 
