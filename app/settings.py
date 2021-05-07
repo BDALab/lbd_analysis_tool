@@ -10,8 +10,10 @@ env = environ.Env(DEBUG=(bool, False))
 if env.bool('READ_DOT_ENV_FILE', default=True):
     environ.Env.read_env()
 
+# TODO: Set to True by default in the DEVEL -> change when going to PROD
 # Get the debug mode setting
-DEBUG = env('DEBUG')
+# DEBUG = env('DEBUG')
+DEBUG = True
 
 # Get the secret key
 SECRET_KEY = env('SECRET_KEY')
@@ -20,8 +22,9 @@ SECRET_KEY = env('SECRET_KEY')
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# TODO: Set to True by default in the DEVEL -> change when going to PROD
 # Set the allowed hosts
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -164,18 +167,40 @@ LOGGING = {
             'level': 'INFO',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
-            'formatter': 'simple'
+            'formatter': 'verbose'
         },
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler'
         },
+
+        # TimedRotatingFileHandler
         'file': {
             'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': BASE_DIR / 'logs' / 'log.log',
+            'when': 'D',
+            'backupCount': 365,
             'formatter': 'verbose'
         }
+
+        # RotatingFileHandler
+        # 'file': {
+        #     'level': 'INFO',
+        #     'class': 'logging.handlers.RotatingFileHandler',
+        #     'filename': BASE_DIR / 'logs' / 'log.log',
+        #     'maxBytes': 15728640,  # 1024 * 1024 * 15B = 15MB
+        #     'backupCount': 365,
+        #     'formatter': 'verbose'
+        # }
+
+        # FileHandler
+        # 'file': {
+        #     'level': 'INFO',
+        #     'class': 'logging.FileHandler',
+        #     'filename': BASE_DIR / 'logs' / 'log.log',
+        #     'formatter': 'verbose'
+        # }
     },
     'loggers': {
         'dashboard': {
@@ -191,6 +216,5 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-
     }
 }
