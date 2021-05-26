@@ -5,10 +5,12 @@ from pathlib import Path
 # set casting, default value
 env = environ.Env(DEBUG=(bool, False))
 
+
 # Read the .env file (development) or read the environment variables directly (production)
 # TODO: Set default as False in production and export the environment variable
 if env.bool('READ_DOT_ENV_FILE', default=True):
     environ.Env.read_env()
+
 
 # TODO: Set to True by default in the DEVEL -> change when going to PROD
 # Get the debug mode setting
@@ -28,7 +30,6 @@ ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,6 +46,8 @@ INSTALLED_APPS = [
     'subjects'
 ]
 
+
+# Middleware settings
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -55,8 +58,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+
+# URL settings
 ROOT_URLCONF = 'app.urls'
 
+
+# Templates settings
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -73,12 +80,12 @@ TEMPLATES = [
     },
 ]
 
+
+# WSGI settings
 WSGI_APPLICATION = 'app.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.1/ref/settings/#databases
-
+# Database (https://docs.djangoproject.com/en/3.1/ref/settings/#databases)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -91,9 +98,7 @@ DATABASES = {
 }
 
 
-# Password validation
-# https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
-
+# Password validation (https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators)
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -110,40 +115,46 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/3.1/topics/i18n/
-
+# Internationalization (https://docs.djangoproject.com/en/3.1/topics/i18n/)
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.1/howto/static-files/
-
+# Static files (CSS, JavaScript, Images; https://docs.djangoproject.com/en/3.1/howto/static-files/)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = 'static_root'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media_root'
 
+
+# Auth settings
 AUTH_USER_MODEL = 'subjects.User'
+
+
+# E-mail settings
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+
+# Login/logout settings
 LOGIN_REDIRECT_URL = '/subjects/'
 LOGIN_URL = '/login'
 LOGOUT_REDIRECT_URL = '/'
 
+
+# Crispy forms settings
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'tailwind'
 CRISPY_TEMPLATE_PACK = 'tailwind'
 
 
+# Predictor API settings
+PREDICTOR_API_URL = 'http://127.0.0.1:5000'
+
+
+# Logging settings
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -174,7 +185,6 @@ LOGGING = {
             'class': 'django.utils.log.AdminEmailHandler'
         },
 
-        # TimedRotatingFileHandler
         'file': {
             'level': 'INFO',
             'class': 'logging.handlers.TimedRotatingFileHandler',
@@ -183,24 +193,6 @@ LOGGING = {
             'backupCount': 365,
             'formatter': 'verbose'
         }
-
-        # RotatingFileHandler
-        # 'file': {
-        #     'level': 'INFO',
-        #     'class': 'logging.handlers.RotatingFileHandler',
-        #     'filename': BASE_DIR / 'logs' / 'log.log',
-        #     'maxBytes': 15728640,  # 1024 * 1024 * 15B = 15MB
-        #     'backupCount': 365,
-        #     'formatter': 'verbose'
-        # }
-
-        # FileHandler
-        # 'file': {
-        #     'level': 'INFO',
-        #     'class': 'logging.FileHandler',
-        #     'filename': BASE_DIR / 'logs' / 'log.log',
-        #     'formatter': 'verbose'
-        # }
     },
     'loggers': {
         'dashboard': {
