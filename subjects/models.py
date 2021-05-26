@@ -43,6 +43,7 @@ class Subject(models.Model):
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)
     diagnosed = models.BooleanField('diagnosed', default=False)
+    lbd_probability = models.FloatField('lbd_probability', null=True, blank=True)
     description = models.CharField('description', max_length=255, blank=True)
 
     def __str__(self):
