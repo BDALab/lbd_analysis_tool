@@ -288,9 +288,6 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
         # Add the examinations
         context.update({'examinations': examinations})
 
-        from pprint import pprint
-        pprint(context)
-
         # Return the updated context
         return context
 
