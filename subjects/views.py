@@ -440,7 +440,7 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
 
         # Prepare the questionnaire data
         if questionnaire_data:
-            questionnaire_data = questionnaire_data.get_questions()
+            questionnaire_data = DataQuestionnaire.get_questions_with_answers(questionnaire_data)
 
         # Add the questionnaire data
         context.update({'questionnaire_data': questionnaire_data})

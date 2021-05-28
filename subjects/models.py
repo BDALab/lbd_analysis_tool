@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
+from .models_configuration import DataAcousticConfiguration, DataQuestionnaireConfiguration
 
 
 class User(AbstractUser):
@@ -184,11 +185,19 @@ class CommonExaminationSessionData(models.Model):
         """Meta class definition"""
         abstract = True
 
+    # Define the configuration instance
+    CONFIGURATION = None
+
     # Define the model schema
     examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE)
     description = models.CharField('description', max_length=255, blank=True)
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)
+
+    @classmethod
+    def get_feature_names(cls):
+        """Returns the feature names"""
+        return cls.CONFIGURATION.feature_names()
 
     @classmethod
     def get_data(cls, pk=None, examination_session=None, subject_code=None, session_number=None):
@@ -306,22 +315,19 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         """Meta class definition"""
         abstract = True
 
-    # Define the questions
-    QUESTIONS = []
+    @staticmethod
+    def get_questions_with_answers(record):
+        """Gets the questions and answers of the given questionnaire"""
 
-    # Define the questions statements
-    QUESTIONS_STATEMENTS = {}
+        # Get the questionnaire question names
+        names = record.CONFIGURATION.get_feature_names()
 
-    def get_questions(self):
-        """
-        Gets the questions and answers of the given questionnaire.
+        # Get the questionnaire questions
+        questions = record.CONFIGURATION.get_questions()
 
-        :return: questions and answers
-        :rtype: list
-        """
         return [
-            {'question': self.QUESTIONS_STATEMENTS.get(question, question), 'answer': getattr(self, question)}
-            for question in self.QUESTIONS
+            {'question': question, 'answer': getattr(record, name) or 'unfilled'}
+            for name, question in zip(names, questions)
         ]
 
     @classmethod
@@ -341,7 +347,7 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         writer = csv.writer(response)
 
         # Read the data
-        data = cls.get_questions(record)
+        data = cls.get_questions_with_answers(record)
 
         # Write the header and the body
         writer.writerow([element.get('question') for element in data])
@@ -354,6 +360,9 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
 class DataAcoustic(CommonFeatureBasedData):
     """Class implementing acoustic data model"""
 
+    # Define the configuration instance
+    CONFIGURATION = DataAcousticConfiguration()
+
     # Define the model schema
     data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
 
@@ -364,31 +373,21 @@ class DataAcoustic(CommonFeatureBasedData):
 class DataQuestionnaire(CommonQuestionnaireBasedData):
     """Class implementing questionnaire data model"""
 
+    # Define the configuration instance
+    CONFIGURATION = DataQuestionnaireConfiguration()
+
     # Define the questions
-    QUESTIONS = ['q1', 'q2', 'q3', 'q4', 'q5']
+    QUESTIONS = CONFIGURATION.get_questions()
 
-    # Define the questions statements
-    QUESTIONS_STATEMENTS = {
-        'q1': 'question 1',
-        'q2': 'question 2',
-        'q3': 'question 3',
-        'q4': 'question 4',
-        'q5': 'question 5'
-    }
-
-    # Define the questionnaire data options
-    Q1_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
-    Q2_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
-    Q3_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
-    Q4_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
-    Q5_OPTIONS = [(1, 'A'), (2, 'B'), (3, 'C'), (4, 'D'), (5, 'E')]
+    # Define the options
+    OPTIONS = CONFIGURATION.get_options()
 
     # Define the model schema
-    q1 = models.PositiveSmallIntegerField('question 1', choices=Q1_OPTIONS, blank=True, null=True)
-    q2 = models.PositiveSmallIntegerField('question 2', choices=Q2_OPTIONS, blank=True, null=True)
-    q3 = models.PositiveSmallIntegerField('question 3', choices=Q3_OPTIONS, blank=True, null=True)
-    q4 = models.PositiveSmallIntegerField('question 4', choices=Q4_OPTIONS, blank=True, null=True)
-    q5 = models.PositiveSmallIntegerField('question 5', choices=Q5_OPTIONS, blank=True, null=True)
+    q1 = models.PositiveSmallIntegerField(QUESTIONS[0], choices=OPTIONS[0], blank=True, null=True)
+    q2 = models.PositiveSmallIntegerField(QUESTIONS[1], choices=OPTIONS[1], blank=True, null=True)
+    q3 = models.PositiveSmallIntegerField(QUESTIONS[2], choices=OPTIONS[2], blank=True, null=True)
+    q4 = models.PositiveSmallIntegerField(QUESTIONS[3], choices=OPTIONS[3], blank=True, null=True)
+    q5 = models.PositiveSmallIntegerField(QUESTIONS[4], choices=OPTIONS[4], blank=True, null=True)
 
     def __str__(self):
         return f'Questionnaire data for {self.examination_session.session_number}. session'
