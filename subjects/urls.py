@@ -50,7 +50,7 @@ urlpatterns = [
     # 2. questionnaire data
     path('<str:code>/session/<int:session_number>/data_questionnaire/import/',
          SessionDataQuestionnaireUploadView.as_view(),
-         name='import_data_questionnaire'),
+         name='import_questionnaire_data'),
     path('<str:code>/session/<int:session_number>/data_questionnaire/export',
          export_questionnaire_data,
          name='export_questionnaire_data'),

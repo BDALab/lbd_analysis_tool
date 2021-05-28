@@ -262,6 +262,10 @@
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
                         Update data
                     </a>
+                    <a href="{% url 'subjects:import_questionnaire_data' session.subject.code session.session_number %}"
+                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
+                        Upload data
+                    </a>
                     <a href="{% url 'subjects:export_questionnaire_data' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
                         Export data
@@ -280,6 +284,10 @@
                     <a href="{% url 'subjects:session_create_data_questionnaire' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
                         Fill questionnaire
+                    </a>
+                    <a href="{% url 'subjects:import_questionnaire_data' session.subject.code session.session_number %}"
+                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
+                        Upload data
                     </a>
                 </div>
             {% endif %}
