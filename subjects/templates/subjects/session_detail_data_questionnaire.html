@@ -124,10 +124,10 @@
                                             {% for item in page_obj.object_list %}
                                                 <tr class="border-b border-gray-200 hover:bg-gray-100">
                                                     <td class="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-500">
-                                                        {{ item.question }}
+                                                        {{ item.label }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                                        {{ item.answer }}
+                                                        {{ item.value }}
                                                     </td>
                                                 </tr>
                                             {% endfor %}
@@ -135,10 +135,10 @@
                                             {% for item in questionnaire_data %}
                                                 <tr class="border-b border-gray-200 hover:bg-gray-100">
                                                     <td class="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-500">
-                                                        {{ item.question }}
+                                                        {{ item.label }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                                        {{ item.answer }}
+                                                        {{ item.value }}
                                                     </td>
                                                 </tr>
                                             {% endfor %}

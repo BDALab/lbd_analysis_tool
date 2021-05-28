@@ -323,7 +323,7 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
 
         # Prepare the acoustic data
         if acoustic_data:
-            acoustic_data = DataAcoustic.read_file(acoustic_data)
+            acoustic_data = DataAcoustic.prepare_presentable(record=acoustic_data)
 
         # Add the acoustic data
         context.update({'acoustic_data': acoustic_data})
@@ -440,7 +440,7 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
 
         # Prepare the questionnaire data
         if questionnaire_data:
-            questionnaire_data = DataQuestionnaire.get_questions_with_answers(questionnaire_data)
+            questionnaire_data = DataQuestionnaire.prepare_presentable(record=questionnaire_data)
 
         # Add the questionnaire data
         context.update({'questionnaire_data': questionnaire_data})

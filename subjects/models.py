@@ -188,6 +188,16 @@ class CommonExaminationSessionData(models.Model):
     # Define the configuration instance
     CONFIGURATION = None
 
+    # Define the feature label/value field names
+    FEATURE_LABEL_FIELD = 'label'
+    FEATURE_VALUE_FIELD = 'value'
+
+    # Define the unfilled feature label/value representation and real value
+    UNFILLED_FEATURE_LABEL_REPR = 'missing'
+    UNFILLED_FEATURE_LABEL_REAL = None
+    UNFILLED_FEATURE_VALUE_REPR = 'missing'
+    UNFILLED_FEATURE_VALUE_REAL = None
+
     # Define the model schema
     examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE)
     description = models.CharField('description', max_length=255, blank=True)
@@ -195,9 +205,138 @@ class CommonExaminationSessionData(models.Model):
     updated_on = models.DateField('updated on', auto_now=True)
 
     @classmethod
-    def get_feature_names(cls):
-        """Returns the feature names"""
+    def get_features_from_record(cls, record):
+        """
+        Returns the features as a list of dicts from the input record.
+
+        :param record: feature-based data record
+        :type record: Record
+        :return: feature-based data (feature labels, feature values)
+        :rtype: list of dicts
+        """
+        return []
+
+    @classmethod
+    def get_configured_feature_names(cls):
+        """Returns the configured feature names"""
         return cls.CONFIGURATION.feature_names()
+
+    @classmethod
+    def get_provided_feature_names(cls, features):
+        """Returns the provided feature names"""
+        return [feature[cls.FEATURE_LABEL_FIELD] for feature in features]
+
+    @classmethod
+    def adjust_feature_label_for_presentation(cls, label):
+        """Adjusts the feature label for presentation"""
+        return label
+
+    @classmethod
+    def adjust_feature_value_for_presentation(cls, value):
+        """Adjusts the feature value for presentation"""
+        if not value or value == cls.UNFILLED_FEATURE_VALUE_REAL:
+            return cls.UNFILLED_FEATURE_VALUE_REPR
+        else:
+            return value
+
+    @classmethod
+    def adjust_feature_label_for_computation(cls, label):
+        """Adjusts the feature label for computation"""
+        return label
+
+    @classmethod
+    def adjust_feature_value_for_computation(cls, value):
+        """Adjusts the feature value for computation"""
+        if isinstance(value, str) and value == cls.UNFILLED_FEATURE_VALUE_REPR:
+            return cls.UNFILLED_FEATURE_VALUE_REAL
+        else:
+            return value
+
+    @classmethod
+    def prepare_presentable(cls, record=None, features=None):
+        """
+        Prepares the features to be presentable.
+
+        :param record: record
+        :type record: Record, optional
+        :param features: features
+        :type features: list of dicts, optional
+        :return: features in a presentable form
+        :rtype: list of dicts
+        """
+
+        # Validate the input arguments
+        if not any((record, features)):
+            raise ValueError(f"Not enough information: record or features must be provided")
+
+        # Get the features
+        features = cls.get_features_from_record(record) or features
+
+        # Return the presentable features
+        return [{
+            cls.FEATURE_LABEL_FIELD: cls.adjust_feature_label_for_presentation(feature[cls.FEATURE_LABEL_FIELD]),
+            cls.FEATURE_VALUE_FIELD: cls.adjust_feature_value_for_presentation(feature[cls.FEATURE_VALUE_FIELD])
+            } for feature in features
+        ]
+
+    @classmethod
+    def prepare_computable(cls, record=None, features=None):
+        """
+        Prepares the features to be computable.
+
+        :param record: record
+        :type record: Record, optional
+        :param features: features
+        :type features: list of dicts, optional
+        :return: features in a computable form
+        :rtype: list of dicts
+        """
+
+        # Validate the input arguments
+        if not any((record, features)):
+            raise ValueError(f"Not enough information: record or features must be provided")
+
+        # Get the features
+        features = cls.get_features_from_record(record) or features
+
+        # Return the computable features
+        return [{
+            cls.FEATURE_LABEL_FIELD: cls.adjust_feature_label_for_computation(feature[cls.FEATURE_LABEL_FIELD]),
+            cls.FEATURE_VALUE_FIELD: cls.adjust_feature_value_for_computation(feature[cls.FEATURE_VALUE_FIELD])
+            } for feature in features
+        ]
+
+    @classmethod
+    def prepare_downloadable(cls, response, record=None, features=None):
+        """
+        Prepares the features to be downloadable.
+
+        :param response: response to be filled with the features
+        :type response: HttpResponse
+        :param record: record
+        :type record: Record, optional
+        :param features: features
+        :type features: list of dicts, optional
+        :return: response with the inserted data
+        :rtype: HttpResponse
+        """
+
+        # Validate the input arguments
+        if not any((record, features)):
+            raise ValueError(f"Not enough information: record or features must be provided")
+
+        # Get the features
+        features = cls.get_features_from_record(record) or features
+
+        # Prepare the CSV writer
+        writer = csv.writer(response)
+
+        # Write the header and the body
+        writer.writerow([element.get(cls.FEATURE_LABEL_FIELD) for element in features])
+        writer.writerow([element.get(cls.FEATURE_VALUE_FIELD) for element in features])
+
+        # Return the response
+        return response
 
     @classmethod
     def get_data(cls, pk=None, examination_session=None, subject_code=None, session_number=None):
@@ -249,16 +388,9 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
         """Meta class definition"""
         abstract = True
 
-    @staticmethod
-    def read_file(record):
-        """
-        Reads the feature-based data from the provided database records.
-
-        :param record: feature-based data record
-        :type record: Record
-        :return: feature-based data (feature labels, feature values)
-        :rtype: list of dicts
-        """
+    @classmethod
+    def get_features_from_record(cls, record):
+        """ Returns the features from the input record"""
 
         # Prepare the data
         feature_labels = []
@@ -272,40 +404,11 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
                 if i == 2:
                     feature_values = row
 
-        # Process the data and prepare the features
-        features = [
-            {'label': label, 'value': value}
+        # Return the features
+        return [
+            {cls.FEATURE_LABEL_FIELD: label, cls.FEATURE_VALUE_FIELD: value}
             for label, value in zip(feature_labels, feature_values)
         ]
-
-        # Return the features
-        return features
-
-    @classmethod
-    def prepare_downloadable(cls, record, response):
-        """
-        Prepares the feature-based data to be downloaded.
-
-        :param record: feature-based data record
-        :type record: Record
-        :param response: response to be filled with the feature-based data
-        :type response: HttpResponse
-        :return: response with the inserted data
-        :rtype: HttpResponse
-        """
-
-        # Prepare the CSV writer
-        writer = csv.writer(response)
-
-        # Read the data
-        data = cls.read_file(record)
-
-        # Write the header and the body
-        writer.writerow([element.get('label') for element in data])
-        writer.writerow([element.get('value') for element in data])
-
-        # Return the response
-        return response
 
 
 class CommonQuestionnaireBasedData(CommonExaminationSessionData):
@@ -315,9 +418,9 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         """Meta class definition"""
         abstract = True
 
-    @staticmethod
-    def get_questions_with_answers(record):
-        """Gets the questions and answers of the given questionnaire"""
+    @classmethod
+    def get_features_from_record(cls, record):
+        """ Returns the features from the input record"""
 
         # Get the questionnaire question names
         names = record.CONFIGURATION.get_feature_names()
@@ -325,36 +428,11 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         # Get the questionnaire questions
         questions = record.CONFIGURATION.get_questions()
 
+        # Return the features
         return [
-            {'question': question, 'answer': getattr(record, name) or 'unfilled'}
+            {cls.FEATURE_LABEL_FIELD: question, cls.FEATURE_VALUE_FIELD: getattr(record, name)}
             for name, question in zip(names, questions)
         ]
-
-    @classmethod
-    def prepare_downloadable(cls, record, response):
-        """
-        Prepares the questionnaire-based data to be downloaded.
-
-        :param record: questionnaire-based data record
-        :type record: Record
-        :param response: response to be filled with the questionnaire-based data
-        :type response: HttpResponse
-        :return: response with the inserted data
-        :rtype: HttpResponse
-        """
-
-        # Prepare the CSV writer
-        writer = csv.writer(response)
-
-        # Read the data
-        data = cls.get_questions_with_answers(record)
-
-        # Write the header and the body
-        writer.writerow([element.get('question') for element in data])
-        writer.writerow([element.get('answer') for element in data])
-
-        # Return the response
-        return response
 
 
 class DataAcoustic(CommonFeatureBasedData):
