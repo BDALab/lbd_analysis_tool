@@ -1,5 +1,6 @@
 import environ
 from pathlib import Path
+from .configuration import load_configuration
 
 
 # set casting, default value
@@ -136,7 +137,7 @@ AUTH_USER_MODEL = 'subjects.User'
 
 
 # E-mail settings
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 
 # Login/logout settings
@@ -152,6 +153,11 @@ CRISPY_TEMPLATE_PACK = 'tailwind'
 
 # Predictor API settings
 PREDICTOR_API_URL = 'http://127.0.0.1:5000'
+
+
+# Data settings
+DATA_ACOUSTIC = load_configuration('data_acoustic.json')
+DATA_QUESTIONNAIRE = load_configuration('data_questionnaire.json')
 
 
 # Logging settings
