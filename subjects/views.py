@@ -8,7 +8,7 @@ from django.contrib.auth.views import LoginView
 from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
-from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm
+from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm, UploadFileForm
 
 
 # Get the module-level logger instance
@@ -549,6 +549,79 @@ class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView)
         return reverse_lazy(
             'subjects:session_detail_data_questionnaire',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+
+
+class SessionDataQuestionnaireUploadView(LoginRequiredMixin, generic.FormView):
+    """Class implementing session: questionnaire data upload view"""
+
+    # Define the template name
+    template_name = 'subjects/session_upload_data_questionnaire.html'
+
+    # Define the model name
+    model = DataQuestionnaire
+
+    # Define the form class
+    form_class = UploadFileForm
+
+    def form_valid(self, form):
+        """Form valid hook: sets data's session after created"""
+
+        # Get the data
+        data = DataQuestionnaire.get_data(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # If the questionnaire does not exist yet, create it from the form data
+        if not data:
+
+            # Get the examination session
+            session = ExaminationSession.get_session(
+                subject_code=self.kwargs.get('code'),
+                session_number=self.kwargs.get('session_number'))
+
+            # Create the questionnaire data
+            DataQuestionnaire.create_from_form(form, examination_session=session)
+
+        # Otherwise, update the questionnaire from the form
+        else:
+            DataQuestionnaire.update_from_form(form, data)
+
+        # Return the updated data
+        return super(SessionDataQuestionnaireUploadView, self).form_valid(form)
+
+    def set_session(self, data):
+        """Sets the session for a given data after creating"""
+
+        # Update the examination session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Return the updated data
+        return data
+
+    def get_success_url(self):
+        """Returns the success URL"""
+        return reverse_lazy(
+            'subjects:session_detail_data_questionnaire',
+            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataQuestionnaireUploadView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Add the examination session
+        context.update({'session': session})
+
+        # Return the updated context
+        return context
 
 
 def export_acoustic_data(request, code, session_number):

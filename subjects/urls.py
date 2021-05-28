@@ -11,6 +11,7 @@ from .views import (
     SessionDataQuestionnaireDetailView,
     SessionDataQuestionnaireCreateView,
     SessionDataQuestionnaireUpdateView,
+    SessionDataQuestionnaireUploadView,
     create_session,
     export_acoustic_data,
     export_questionnaire_data
@@ -47,6 +48,9 @@ urlpatterns = [
          name='session_update_data_acoustic'),
 
     # 2. questionnaire data
+    path('<str:code>/session/<int:session_number>/data_questionnaire/import/',
+         SessionDataQuestionnaireUploadView.as_view(),
+         name='import_data_questionnaire'),
     path('<str:code>/session/<int:session_number>/data_questionnaire/export',
          export_questionnaire_data,
          name='export_questionnaire_data'),

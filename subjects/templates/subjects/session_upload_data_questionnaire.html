@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load tailwind_filters %}
+
+{% block content %}
+
+    <div class="max-w-lg mx-auto">
+
+        <!-- Upload questionnaire data information/header -->
+        <div class="text-center mt-24">
+
+            <!-- Upload questionnaire data information -->
+            <h2 class="text-4xl tracking-tight">
+                Upload data
+            </h2>
+
+            <!-- Go to the session detail -->
+            <div class="mt-2">
+                <span class="text-sm">
+                    or go back to the
+                    <a href="{% url 'subjects:session_detail_data_acoustic' session.subject.code session.session_number %}"
+                       class="text-indigo-500">
+                        examination session
+                    </a>
+                </span>
+            </div>
+        </div>
+
+        <!-- Upload questionnaire data -->
+        <form method="post" class="mt-5 mb-10" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form|crispy }}
+            <button type="submit"
+                    class="w-full text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-2 rounded-md mt-2">
+                Upload
+            </button>
+        </form>
+    </div>
+
+{% endblock content %}

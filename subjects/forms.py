@@ -61,3 +61,10 @@ class DataQuestionnaireForm(forms.ModelForm):
 
         # Database model fields to be used in the form
         fields = ('q1', 'q2', 'q3', 'q4', 'q5', 'description')
+
+
+class UploadFileForm(forms.Form):
+    """Class implementing uploading data form"""
+
+    # Database model fields to be used in the form
+    file = forms.FileField()

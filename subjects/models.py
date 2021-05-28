@@ -4,6 +4,7 @@ from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
 from .models_configuration import DataAcousticConfiguration, DataQuestionnaireConfiguration
+from .models_utils import is_csv_file, read_from_csv
 
 
 class User(AbstractUser):
@@ -193,9 +194,9 @@ class CommonExaminationSessionData(models.Model):
     FEATURE_VALUE_FIELD = 'value'
 
     # Define the unfilled feature label/value representation and real value
-    UNFILLED_FEATURE_LABEL_REPR = 'missing'
+    UNFILLED_FEATURE_LABEL_REPR = ''
     UNFILLED_FEATURE_LABEL_REAL = None
-    UNFILLED_FEATURE_VALUE_REPR = 'missing'
+    UNFILLED_FEATURE_VALUE_REPR = ''
     UNFILLED_FEATURE_VALUE_REAL = None
 
     # Define the model schema
@@ -217,6 +218,14 @@ class CommonExaminationSessionData(models.Model):
         return []
 
     @classmethod
+    def get_features_as_kwargs(cls, features):
+        """Returns the features as kwargs (dict to be unfolded)"""
+        return {
+            feature[cls.FEATURE_LABEL_FIELD]: feature[cls.FEATURE_VALUE_FIELD]
+            for feature in features
+        }
+
+    @classmethod
     def get_configured_feature_names(cls):
         """Returns the configured feature names"""
         return cls.CONFIGURATION.feature_names()
@@ -227,12 +236,12 @@ class CommonExaminationSessionData(models.Model):
         return [feature[cls.FEATURE_LABEL_FIELD] for feature in features]
 
     @classmethod
-    def adjust_feature_label_for_presentation(cls, label):
+    def _adjust_feature_label_for_presentation(cls, label):
         """Adjusts the feature label for presentation"""
         return label
 
     @classmethod
-    def adjust_feature_value_for_presentation(cls, value):
+    def _adjust_feature_value_for_presentation(cls, value):
         """Adjusts the feature value for presentation"""
         if not value or value == cls.UNFILLED_FEATURE_VALUE_REAL:
             return cls.UNFILLED_FEATURE_VALUE_REPR
@@ -240,14 +249,14 @@ class CommonExaminationSessionData(models.Model):
             return value
 
     @classmethod
-    def adjust_feature_label_for_computation(cls, label):
+    def _adjust_feature_label_for_computation(cls, label):
         """Adjusts the feature label for computation"""
         return label
 
     @classmethod
-    def adjust_feature_value_for_computation(cls, value):
+    def _adjust_feature_value_for_computation(cls, value):
         """Adjusts the feature value for computation"""
-        if isinstance(value, str) and value == cls.UNFILLED_FEATURE_VALUE_REPR:
+        if isinstance(value, str) and value in cls.UNFILLED_FEATURE_VALUE_REPR:
             return cls.UNFILLED_FEATURE_VALUE_REAL
         else:
             return value
@@ -270,12 +279,12 @@ class CommonExaminationSessionData(models.Model):
             raise ValueError(f"Not enough information: record or features must be provided")
 
         # Get the features
-        features = cls.get_features_from_record(record) or features
+        features = cls.get_features_from_record(record) if not features else features
 
         # Return the presentable features
         return [{
-            cls.FEATURE_LABEL_FIELD: cls.adjust_feature_label_for_presentation(feature[cls.FEATURE_LABEL_FIELD]),
-            cls.FEATURE_VALUE_FIELD: cls.adjust_feature_value_for_presentation(feature[cls.FEATURE_VALUE_FIELD])
+            cls.FEATURE_LABEL_FIELD: cls._adjust_feature_label_for_presentation(feature[cls.FEATURE_LABEL_FIELD]),
+            cls.FEATURE_VALUE_FIELD: cls._adjust_feature_value_for_presentation(feature[cls.FEATURE_VALUE_FIELD])
             } for feature in features
         ]
 
@@ -297,12 +306,12 @@ class CommonExaminationSessionData(models.Model):
             raise ValueError(f"Not enough information: record or features must be provided")
 
         # Get the features
-        features = cls.get_features_from_record(record) or features
+        features = cls.get_features_from_record(record) if not features else features
 
         # Return the computable features
         return [{
-            cls.FEATURE_LABEL_FIELD: cls.adjust_feature_label_for_computation(feature[cls.FEATURE_LABEL_FIELD]),
-            cls.FEATURE_VALUE_FIELD: cls.adjust_feature_value_for_computation(feature[cls.FEATURE_VALUE_FIELD])
+            cls.FEATURE_LABEL_FIELD: cls._adjust_feature_label_for_computation(feature[cls.FEATURE_LABEL_FIELD]),
+            cls.FEATURE_VALUE_FIELD: cls._adjust_feature_value_for_computation(feature[cls.FEATURE_VALUE_FIELD])
             } for feature in features
         ]
 
@@ -326,7 +335,7 @@ class CommonExaminationSessionData(models.Model):
             raise ValueError(f"Not enough information: record or features must be provided")
 
         # Get the features
-        features = cls.get_features_from_record(record) or features
+        features = cls.get_features_from_record(record) if not features else features
 
         # Prepare the CSV writer
         writer = csv.writer(response)
@@ -337,6 +346,27 @@ class CommonExaminationSessionData(models.Model):
 
         # Return the response
         return response
+
+    @classmethod
+    def read_features_from_file(cls, file):
+        """Returns the features from the input file or file path"""
+
+        # Prepare the features
+        features = []
+
+        # Read the data (feature names and feature values themselves)
+        if is_csv_file(file):
+            features = read_from_csv(file)
+
+        # Handle the case when no features were read
+        if not features:
+            return []
+
+        # Return the features
+        return [
+            {cls.FEATURE_LABEL_FIELD: label, cls.FEATURE_VALUE_FIELD: value}
+            for label, value in features
+        ]
 
     @classmethod
     def get_data(cls, pk=None, examination_session=None, subject_code=None, session_number=None):
@@ -420,19 +450,55 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
 
     @classmethod
     def get_features_from_record(cls, record):
-        """ Returns the features from the input record"""
+        """Returns the features from the input record"""
+        return [
+            {cls.FEATURE_LABEL_FIELD: name, cls.FEATURE_VALUE_FIELD: getattr(record, name)}
+            for name in record.CONFIGURATION.get_feature_names()
+        ]
 
-        # Get the questionnaire question names
-        names = record.CONFIGURATION.get_feature_names()
+    @classmethod
+    def get_features_from_form(cls, form):
+        """Create the record from the input form"""
 
-        # Get the questionnaire questions
-        questions = record.CONFIGURATION.get_questions()
+        # Read the features from the file in the form
+        features = cls.read_features_from_file(form.cleaned_data["file"])
+        features = cls.prepare_computable(features=features)
 
         # Return the features
-        return [
-            {cls.FEATURE_LABEL_FIELD: question, cls.FEATURE_VALUE_FIELD: getattr(record, name)}
-            for name, question in zip(names, questions)
-        ]
+        return features
+
+    @classmethod
+    def create_from_form(cls, form, **kwargs):
+        """Create the record from the input form"""
+
+        # Read the features from the file in the form
+        features = cls.get_features_from_form(form)
+
+        # Convert the features to kwargs and merge them with the input kwargs
+        record_data = {**cls.get_features_as_kwargs(features), **kwargs}
+
+        # Create the record
+        cls.objects.create(**record_data)
+
+    @classmethod
+    def update_from_form(cls, form, record, **kwargs):
+        """Updates the record from the input form"""
+
+        # Read the features from the file in the form
+        features = cls.get_features_from_form(form)
+
+        # Convert the features to kwargs and merge them with the input kwargs
+        record_data = {**cls.get_features_as_kwargs(features), **kwargs}
+
+        # Update the record
+        for field, value in record_data.items():
+            setattr(record, field, value)
+
+        # Save the record
+        record.save()
+
+        # Return the updated record
+        return record
 
 
 class DataAcoustic(CommonFeatureBasedData):
