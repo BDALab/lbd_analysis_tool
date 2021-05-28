@@ -241,7 +241,7 @@ def create_session(request, code):
     # Redirect back to the subject detail view
     return HttpResponseRedirect(
         reverse(
-            'subjects:session_detail_data_acoustic',
+            'subjects:session_detail',
             kwargs={'code': subject.code, 'session_number': session_number}
         )
     )
