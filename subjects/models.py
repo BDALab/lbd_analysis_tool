@@ -194,9 +194,11 @@ class CommonExaminationSessionData(models.Model):
     FEATURE_TITLE_FIELD = 'title'
     FEATURE_VALUE_FIELD = 'value'
 
-    # Define the unfilled feature label/value representation and real value
+    # Define the unfilled feature label/title/value representation and real value
     UNFILLED_FEATURE_LABEL_REPR = ''
     UNFILLED_FEATURE_LABEL_REAL = None
+    UNFILLED_FEATURE_TITLE_REPR = 'title'
+    UNFILLED_FEATURE_TITLE_REAL = None
     UNFILLED_FEATURE_VALUE_REPR = ''
     UNFILLED_FEATURE_VALUE_REAL = None
 
@@ -235,9 +237,17 @@ class CommonExaminationSessionData(models.Model):
         return [feature[cls.FEATURE_LABEL_FIELD] for feature in features]
 
     @classmethod
-    def _adjust_feature_label_for_presentation(cls, label):
+    def _adjust_feature_label_for_presentation(cls, label=None):
         """Adjusts the feature label for presentation"""
         return label
+
+    @classmethod
+    def _adjust_feature_title_for_presentation(cls, title):
+        """Adjusts the feature title for presentation"""
+        if not title or title == cls.UNFILLED_FEATURE_TITLE_REAL:
+            return cls.UNFILLED_FEATURE_TITLE_REPR
+        else:
+            return title
 
     @classmethod
     def _adjust_feature_value_for_presentation(cls, value):
@@ -282,8 +292,9 @@ class CommonExaminationSessionData(models.Model):
 
         # Return the presentable features
         return [{
-            cls.FEATURE_LABEL_FIELD: cls._adjust_feature_label_for_presentation(feature[cls.FEATURE_LABEL_FIELD]),
-            cls.FEATURE_VALUE_FIELD: cls._adjust_feature_value_for_presentation(feature[cls.FEATURE_VALUE_FIELD])
+            cls.FEATURE_LABEL_FIELD: cls._adjust_feature_label_for_presentation(feature.get(cls.FEATURE_LABEL_FIELD)),
+            cls.FEATURE_TITLE_FIELD: cls._adjust_feature_title_for_presentation(feature.get(cls.FEATURE_TITLE_FIELD)),
+            cls.FEATURE_VALUE_FIELD: cls._adjust_feature_value_for_presentation(feature.get(cls.FEATURE_VALUE_FIELD))
             } for feature in features
         ]
 
