@@ -200,10 +200,8 @@ class CommonExaminationSessionData(models.Model):
     UNFILLED_FEATURE_VALUE_REAL = None
 
     # Define the model schema
-    examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE)
+    examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE, primary_key=True)
     description = models.CharField('description', max_length=255, blank=True)
-    created_on = models.DateField('created on', auto_now_add=True)
-    updated_on = models.DateField('updated on', auto_now=True)
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
@@ -418,6 +416,9 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
         """Meta class definition"""
         abstract = True
 
+    # Define the model schema
+    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
+
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
         """ Returns the features from the input record"""
@@ -534,9 +535,6 @@ class DataAcoustic(CommonFeatureBasedData):
 
     # Define the configuration instance
     CONFIGURATION = DataAcousticConfiguration()
-
-    # Define the model schema
-    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
 
     def __str__(self):
         return f'Acoustic data for {self.examination_session.session_number}. session'
