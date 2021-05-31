@@ -191,6 +191,7 @@ class CommonExaminationSessionData(models.Model):
 
     # Define the feature label/value field names
     FEATURE_LABEL_FIELD = 'label'
+    FEATURE_TITLE_FIELD = 'title'
     FEATURE_VALUE_FIELD = 'value'
 
     # Define the unfilled feature label/value representation and real value
@@ -454,10 +455,6 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
     MAX_QUESTION_LENGTH_COMPUTABLE = None
 
     @classmethod
-    def _select_question_or_name(cls, name, question, use_questions=False):
-        return question if use_questions else name
-
-    @classmethod
     def _adjust_question_length(cls, question):
         if question and len(question) > cls.MAX_QUESTION_LENGTH_PRESENTABLE:
             question = f"{question[:cls.MAX_QUESTION_LENGTH_PRESENTABLE]}..."
@@ -470,20 +467,28 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         # Get the questionnaire question names
         names = record.CONFIGURATION.get_feature_names()
 
-        # Get the questionnaire questions
-        questions = record.CONFIGURATION.get_questions()
-
-        # Adjust the questionnaire questions if needed
+        # Return the features (names as labels)
         if kwargs.get("use_questions"):
-            questions = [cls._adjust_question_length(question) for question in questions]
 
-        # Return the features
-        return [
-            {
-                cls.FEATURE_LABEL_FIELD: cls._select_question_or_name(name, question, kwargs.get("use_questions")),
-                cls.FEATURE_VALUE_FIELD: getattr(record, name)
-            } for name, question in zip(names, questions)
-        ]
+            # Prepare the questions (long and adjusted version)
+            questions = record.CONFIGURATION.get_questions()
+            questions = [(question, cls._adjust_question_length(question)) for question in questions]
+
+            # Return the features
+            return [{
+                cls.FEATURE_LABEL_FIELD: question,
+                cls.FEATURE_TITLE_FIELD: question_adjusted,
+                cls.FEATURE_VALUE_FIELD: getattr(record, name)}
+                for name, (question, question_adjusted) in zip(names, questions)
+            ]
+
+        # Return the features (questions as labels)
+        else:
+            return [{
+                cls.FEATURE_LABEL_FIELD: names,
+                cls.FEATURE_VALUE_FIELD: getattr(record, name)}
+                for name in names
+            ]
 
     @classmethod
     def get_features_from_form(cls, form):
