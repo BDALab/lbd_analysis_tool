@@ -206,7 +206,7 @@ class CommonExaminationSessionData(models.Model):
     updated_on = models.DateField('updated on', auto_now=True)
 
     @classmethod
-    def get_features_from_record(cls, record):
+    def get_features_from_record(cls, record, **kwargs):
         """
         Returns the features as a list of dicts from the input record.
 
@@ -262,7 +262,7 @@ class CommonExaminationSessionData(models.Model):
             return value
 
     @classmethod
-    def prepare_presentable(cls, record=None, features=None):
+    def prepare_presentable(cls, record=None, features=None, **kwargs):
         """
         Prepares the features to be presentable.
 
@@ -279,7 +279,7 @@ class CommonExaminationSessionData(models.Model):
             raise ValueError(f"Not enough information: record or features must be provided")
 
         # Get the features
-        features = cls.get_features_from_record(record) if not features else features
+        features = cls.get_features_from_record(record, **kwargs) if not features else features
 
         # Return the presentable features
         return [{
@@ -419,7 +419,7 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
         abstract = True
 
     @classmethod
-    def get_features_from_record(cls, record):
+    def get_features_from_record(cls, record, **kwargs):
         """ Returns the features from the input record"""
 
         # Prepare the data
@@ -448,12 +448,40 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         """Meta class definition"""
         abstract = True
 
+    # Define the maximum question name to be shown/used
+    MAX_QUESTION_LENGTH_PRESENTABLE = 100
+    MAX_QUESTION_LENGTH_COMPUTABLE = None
+
     @classmethod
-    def get_features_from_record(cls, record):
+    def _select_question_or_name(cls, name, question, use_questions=False):
+        return question if use_questions else name
+
+    @classmethod
+    def _adjust_question_length(cls, question):
+        if question and len(question) > cls.MAX_QUESTION_LENGTH_PRESENTABLE:
+            question = f"{question[:cls.MAX_QUESTION_LENGTH_PRESENTABLE]}..."
+        return question
+
+    @classmethod
+    def get_features_from_record(cls, record, **kwargs):
         """Returns the features from the input record"""
+
+        # Get the questionnaire question names
+        names = record.CONFIGURATION.get_feature_names()
+
+        # Get the questionnaire questions
+        questions = record.CONFIGURATION.get_questions()
+
+        # Adjust the questionnaire questions if needed
+        if kwargs.get("use_questions"):
+            questions = [cls._adjust_question_length(question) for question in questions]
+
+        # Return the features
         return [
-            {cls.FEATURE_LABEL_FIELD: name, cls.FEATURE_VALUE_FIELD: getattr(record, name)}
-            for name in record.CONFIGURATION.get_feature_names()
+            {
+                cls.FEATURE_LABEL_FIELD: cls._select_question_or_name(name, question, kwargs.get("use_questions")),
+                cls.FEATURE_VALUE_FIELD: getattr(record, name)
+            } for name, question in zip(names, questions)
         ]
 
     @classmethod
