@@ -5,7 +5,9 @@ crispy-tailwind==0.3.0
 Django==3.1.7
 django-crispy-forms==1.11.1
 django-environ==0.4.5
+et-xmlfile==1.1.0
 idna==2.10
+openpyxl==3.0.7
 plotly==4.14.3
 psycopg2-binary==2.8.6
 pytz==2021.1

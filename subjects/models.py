@@ -4,14 +4,31 @@ from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
 from .models_configuration import DataAcousticConfiguration, DataQuestionnaireConfiguration
-from .models_utils import is_csv_file, read_from_csv
+from .models_utils import is_csv_file, is_excel_file, read_features_from_csv, read_features_from_excel
 
 
 class User(AbstractUser):
     """Class implementing user model"""
 
+    # Define the predictor API attributes
+    PREDICTOR_PASSWORD_LENGTH = 20
+
     # Define the model schema
-    organization = models.OneToOneField('Organization', on_delete=models.CASCADE, null=True, blank=True)
+    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
+    predictor_username = models.CharField('predictor username', max_length=50, null=True, blank=True)
+    predictor_password = models.CharField('predictor password', max_length=50, null=True, blank=True)
+    predictor_authorization_token = models.CharField('predictor token', max_length=300, null=True, blank=True)
+
+    def get_predictor_authentication_data(self):
+        """Returns the authentication data for the user instance"""
+        return {
+            'username': self.predictor_username,
+            'password': self.predictor_password
+        }
+
+    def get_predictor_authorization_data(self):
+        """Returns the authorization data for the user instance"""
+        return {'Authorization': f'Bearer {self.predictor_authorization_token}'}
 
 
 class Organization(models.Model):
@@ -99,7 +116,7 @@ class Subject(models.Model):
 
         # Validate the input arguments
         if not any((pk, code)):
-            raise ValueError(f"Not enough information to get a subject")
+            raise ValueError(f'Not enough information to get a subject')
 
         # Return the subject
         else:
@@ -164,7 +181,7 @@ class ExaminationSession(models.Model):
 
         # Validate the input arguments
         if not any((pk, all((any((subject, subject_code)), session_number)))):
-            raise ValueError(f"Not enough information to get a session")
+            raise ValueError(f'Not enough information to get a session')
 
         # Return the session
         else:
@@ -285,7 +302,7 @@ class CommonExaminationSessionData(models.Model):
 
         # Validate the input arguments
         if not any((record, features)):
-            raise ValueError(f"Not enough information: record or features must be provided")
+            raise ValueError(f'Not enough information: record or features must be provided')
 
         # Get the features
         features = cls.get_features_from_record(record, **kwargs) if not features else features
@@ -313,7 +330,7 @@ class CommonExaminationSessionData(models.Model):
 
         # Validate the input arguments
         if not any((record, features)):
-            raise ValueError(f"Not enough information: record or features must be provided")
+            raise ValueError(f'Not enough information: record or features must be provided')
 
         # Get the features
         features = cls.get_features_from_record(record) if not features else features
@@ -342,7 +359,7 @@ class CommonExaminationSessionData(models.Model):
 
         # Validate the input arguments
         if not any((record, features)):
-            raise ValueError(f"Not enough information: record or features must be provided")
+            raise ValueError(f'Not enough information: record or features must be provided')
 
         # Get the features
         features = cls.get_features_from_record(record) if not features else features
@@ -358,15 +375,17 @@ class CommonExaminationSessionData(models.Model):
         return response
 
     @classmethod
-    def read_features_from_file(cls, file):
+    def read_features_from_file(cls, file=None, path=None):
         """Returns the features from the input file or file path"""
 
         # Prepare the features
         features = []
 
         # Read the data (feature names and feature values themselves)
-        if is_csv_file(file):
-            features = read_from_csv(file)
+        if is_csv_file(file=file, path=path):
+            features = read_features_from_csv(file=file, path=path)
+        if is_excel_file(file=file, path=path):
+            features = read_features_from_excel(file=file, path=path)
 
         # Handle the case when no features were read
         if not features:
@@ -376,6 +395,7 @@ class CommonExaminationSessionData(models.Model):
         return [
             {cls.FEATURE_LABEL_FIELD: label, cls.FEATURE_VALUE_FIELD: value}
             for label, value in features
+            if label in cls.CONFIGURATION.get_feature_names()
         ]
 
     @classmethod
@@ -405,7 +425,7 @@ class CommonExaminationSessionData(models.Model):
 
         # Validate the input arguments
         if not any((pk, examination_session, all((subject_code, session_number)))):
-            raise ValueError(f"Not enough information to get data")
+            raise ValueError(f'Not enough information to get data')
 
         # Fetch the data
         if not any((pk, examination_session)):
@@ -429,29 +449,12 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
         abstract = True
 
     # Define the model schema
-    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv'])])
+    data = models.FileField('data', upload_to='data/', validators=[FileExtensionValidator(['csv', 'xls', 'xlsx'])])
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
-        """ Returns the features from the input record"""
-
-        # Prepare the data
-        feature_labels = []
-        feature_values = []
-
-        # Read the data (feature names and feature values themselves)
-        with open(record.data.path, 'r') as csv_file:
-            for i, row in enumerate(csv.reader(csv_file, delimiter=','), 1):
-                if i == 1:
-                    feature_labels = row
-                if i == 2:
-                    feature_values = row
-
-        # Return the features
-        return [
-            {cls.FEATURE_LABEL_FIELD: label, cls.FEATURE_VALUE_FIELD: value}
-            for label, value in zip(feature_labels, feature_values)
-        ]
+        """Returns the features from the input record"""
+        return cls.read_features_from_file(path=record.data.path)
 
 
 class CommonQuestionnaireBasedData(CommonExaminationSessionData):
@@ -468,7 +471,7 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
     @classmethod
     def _adjust_question_length(cls, question):
         if question and len(question) > cls.MAX_QUESTION_LENGTH_PRESENTABLE:
-            question = f"{question[:cls.MAX_QUESTION_LENGTH_PRESENTABLE]}..."
+            question = f'{question[:cls.MAX_QUESTION_LENGTH_PRESENTABLE]}...'
         return question
 
     @classmethod
@@ -476,13 +479,13 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         """Returns the features from the input record"""
 
         # Get the questionnaire question names
-        names = record.CONFIGURATION.get_feature_names()
+        names = cls.CONFIGURATION.get_feature_names()
 
         # Return the features (names as labels)
-        if kwargs.get("use_questions"):
+        if kwargs.get('use_questions'):
 
             # Prepare the questions (long and adjusted version)
-            questions = record.CONFIGURATION.get_questions()
+            questions = cls.CONFIGURATION.get_questions()
             questions = [(question, cls._adjust_question_length(question)) for question in questions]
 
             # Return the features
@@ -496,7 +499,7 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         # Return the features (questions as labels)
         else:
             return [{
-                cls.FEATURE_LABEL_FIELD: names,
+                cls.FEATURE_LABEL_FIELD: name,
                 cls.FEATURE_VALUE_FIELD: getattr(record, name)}
                 for name in names
             ]
@@ -506,7 +509,7 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         """Create the record from the input form"""
 
         # Read the features from the file in the form
-        features = cls.read_features_from_file(form.cleaned_data["file"])
+        features = cls.read_features_from_file(file=form.cleaned_data['file'])
         features = cls.prepare_computable(features=features)
 
         # Return the features

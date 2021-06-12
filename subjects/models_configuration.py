@@ -1,19 +1,27 @@
 from django.conf import settings
 
 
-class CommonDataQuestionnaireBasedConfiguration(object):
-    """Base class for questionnaire based configuration"""
+class CommonDataConfiguration(object):
+    """Base class for data configuration"""
 
     # Load the configuration
     configuration = None
 
+    def get_feature_names(self):
+        """Returns the feature names"""
+        return self.configuration.get('features')
+
+    def get_predictor_feature_names(self):
+        """Returns the feature names used by the predictor"""
+        return self.configuration.get('predictor_features')
+
+
+class CommonDataQuestionnaireBasedConfiguration(CommonDataConfiguration):
+    """Base class for questionnaire based configuration"""
+
     def get_questionnaire(self):
         """Returns the questionnaire (list of dicts)"""
         return [item for item in self.configuration.get('questionnaire')] if self.configuration else []
-
-    def get_feature_names(self):
-        """Returns the feature names (question names)"""
-        return [item['name'] for item in self.get_questionnaire()]
 
     def get_questions(self):
         """Returns the questionnaire questions (list: [question 1, ...])"""
@@ -27,15 +35,9 @@ class CommonDataQuestionnaireBasedConfiguration(object):
         ]
 
 
-class CommonDataFeatureBasedConfiguration(object):
+class CommonDataFeatureBasedConfiguration(CommonDataConfiguration):
     """Base class for feature based configuration"""
-
-    # Load the configuration
-    configuration = None
-
-    def get_feature_names(self):
-        """Returns the feature names"""
-        return self.configuration.get('features')
+    pass
 
 
 class DataQuestionnaireConfiguration(CommonDataQuestionnaireBasedConfiguration):
