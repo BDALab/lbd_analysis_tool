@@ -44,6 +44,7 @@ def predict_lbd_probability_for_session(user, session):
     return predict_lbd_probability(user, data, model)
 
 
+# TODO: what if there are more than 1 sessions with the data? Use mean values for the features?)
 def predict_lbd_probability_for_subject(user, subject, session_model):
     """Predicts the LBD probability for the latest session data of a subject"""
 
