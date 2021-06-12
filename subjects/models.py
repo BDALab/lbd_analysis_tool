@@ -217,8 +217,13 @@ class ExaminationSession(models.Model):
             # Get the model class from the data to model class mapping
             model, model_configuration = DATA_TO_MODEL_CLASS_MAPPING[label]
 
+            # Get the model record (skip if there is not record yet)
+            record = model.get_data(examination_session=self)
+            if not record:
+                continue
+
             # Get the features for the referenced record
-            features = model.get_features_from_record(model.get_data(examination_session=self))
+            features = model.get_features_from_record(record)
             features = model.get_features_as_kwargs(features)
 
             # Accumulate the features and labels
@@ -499,7 +504,7 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
         """Returns the features from the input record"""
-        return cls.read_features_from_file(path=record.data.path)
+        return cls.read_features_from_file(path=record.data.path) if record else []
 
 
 class CommonQuestionnaireBasedData(CommonExaminationSessionData):
@@ -522,6 +527,10 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
         """Returns the features from the input record"""
+
+        # Handle no record situation
+        if not record:
+            return []
 
         # Get the questionnaire question names
         names = cls.CONFIGURATION.get_feature_names()
