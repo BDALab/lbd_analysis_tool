@@ -1,6 +1,5 @@
 import logging
-from django.conf import settings
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.shortcuts import reverse, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
@@ -10,7 +9,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
 from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm, UploadFileForm
-from predictor.client import predict_lbd_probability
+from .views_utils import export_data, predict_lbd_probability_for_session, predict_lbd_probability_for_subject
 
 
 # Get the module-level logger instance
@@ -98,6 +97,13 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
         if self.request.GET.get('q'):
             context.update({'q': self.request.GET.get('q')})
 
+        # Get the LBD probability for each subject in the list
+        for subject in context.get(self.context_object_name):
+            subject.lbd_probability = predict_lbd_probability_for_subject(
+                user=self.request.user,
+                subject=subject,
+                session_model=ExaminationSession)
+
         # Return the updated context
         return context
 
@@ -131,12 +137,11 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
 
         if sessions:
 
-            # Prepare the data (from the last examination session) and the model for the prediction
-            data = sessions.last().get_features_for_prediction()
-            model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
-
             # Predict the LBD probability
-            predicted = predict_lbd_probability(self.request.user, data, model)
+            predicted = predict_lbd_probability_for_subject(
+                user=self.request.user,
+                subject=self.object.id,
+                session_model=ExaminationSession)
 
             # Add the prediction
             if predicted:
@@ -303,12 +308,8 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
         # Add the examinations
         context.update({'examinations': examinations})
 
-        # Prepare the data (from the current examination session) and the model for the prediction
-        data = self.object.get_features_for_prediction()
-        model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
-
         # Predict the LBD probability
-        predicted = predict_lbd_probability(self.request.user, data, model)
+        predicted = predict_lbd_probability_for_session(user=self.request.user, session=self.object)
 
         # Add the prediction
         if predicted:
@@ -652,39 +653,9 @@ class SessionDataQuestionnaireUploadView(LoginRequiredMixin, generic.FormView):
 
 def export_acoustic_data(request, code, session_number):
     """Exports the acoustic data in a CSV file"""
-    return _export_data(request, code, session_number, model=DataAcoustic)
+    return export_data(request, code, session_number, model=DataAcoustic)
 
 
 def export_questionnaire_data(request, code, session_number):
     """Exports the questionnaire data in a CSV file"""
-    return _export_data(request, code, session_number, model=DataQuestionnaire)
-
-
-def _export_data(request, code, session_number, model):
-    """
-    Exports the data in a CSV file that is downloaded in a browser.
-
-    :param request: HTTP request
-    :type request: Request
-    :param code: code of the subject
-    :type code: str
-    :param session_number: session number
-    :type session_number: str
-    :param model: model to be used to get the data to be exported
-    :type model: Model
-    :return: HTTP response for the data to be exported
-    :rtype: HttpResponse
-    """
-
-    # Prepare the HTTP response and the fetched data to be exported
-    response = HttpResponse(content_type='text/csv')
-    fetched = model.get_data(subject_code=code, session_number=session_number)
-
-    # Prepare the fetched data to be downloadable
-    response = model.prepare_downloadable(record=fetched, response=response)
-
-    # Set the content disposition (to be downloaded by a browser)
-    response['Content-Disposition'] = 'attachment; filename="exported.csv"'
-
-    # Return the HTTP response
-    return response
+    return export_data(request, code, session_number, model=DataQuestionnaire)
