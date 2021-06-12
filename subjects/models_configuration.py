@@ -7,31 +7,36 @@ class CommonDataConfiguration(object):
     # Load the configuration
     configuration = None
 
-    def get_feature_names(self):
+    @classmethod
+    def get_feature_names(cls):
         """Returns the feature names"""
-        return self.configuration.get('features')
+        return cls.configuration.get('features')
 
-    def get_predictor_feature_names(self):
+    @classmethod
+    def get_predictor_feature_names(cls):
         """Returns the feature names used by the predictor"""
-        return self.configuration.get('predictor_features')
+        return cls.configuration.get('predictor_features')
 
 
 class CommonDataQuestionnaireBasedConfiguration(CommonDataConfiguration):
     """Base class for questionnaire based configuration"""
 
-    def get_questionnaire(self):
+    @classmethod
+    def get_questionnaire(cls):
         """Returns the questionnaire (list of dicts)"""
-        return [item for item in self.configuration.get('questionnaire')] if self.configuration else []
+        return [item for item in cls.configuration.get('questionnaire')] if cls.configuration else []
 
-    def get_questions(self):
+    @classmethod
+    def get_questions(cls):
         """Returns the questionnaire questions (list: [question 1, ...])"""
-        return [item['question'] for item in self.get_questionnaire()]
+        return [item['question'] for item in cls.get_questionnaire()]
 
-    def get_options(self):
+    @classmethod
+    def get_options(cls):
         """Returns the questionnaire options (list: [[(i, option), ...]])"""
         return [
             [(number, option) for number, option in enumerate(questionnaire_item["options"], 1)]
-            for questionnaire_item in self.get_questionnaire()
+            for questionnaire_item in cls.get_questionnaire()
         ]
 
 
