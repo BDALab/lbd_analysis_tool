@@ -75,6 +75,11 @@ def predict_lbd_probability(user, data, model):
     # Prepare the predictor API client using the provided user instance
     predictor = PredictorApiClient(user)
 
+    # Validate if there are data to be used for the prediction
+    labels, values = data
+    if values.size == 0:
+        return None
+
     # Predict the LBD probability via the predictor API using the provided data and model identifier
     response = predictor.predict(data=data, model=model)
 
