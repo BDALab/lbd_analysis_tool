@@ -610,7 +610,9 @@ class DataAcoustic(CommonFeatureBasedData):
     CONFIGURATION = DataAcousticConfiguration()
 
     def __str__(self):
-        return f'Acoustic data for {self.examination_session.session_number}. session'
+        subject = self.examination_session.subject.code
+        session = self.examination_session.session_number
+        return f'Acoustic data for subject: {subject} ({session}. session)'
 
 
 class DataQuestionnaire(CommonQuestionnaireBasedData):
@@ -633,7 +635,9 @@ class DataQuestionnaire(CommonQuestionnaireBasedData):
     q5 = models.PositiveSmallIntegerField(QUESTIONS[4], choices=OPTIONS[4], blank=True, null=True)
 
     def __str__(self):
-        return f'Questionnaire data for {self.examination_session.session_number}. session'
+        subject = self.examination_session.subject.code
+        session = self.examination_session.session_number
+        return f'Questionnaire data for subject: {subject} ({session}. session)'
 
 
 def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
