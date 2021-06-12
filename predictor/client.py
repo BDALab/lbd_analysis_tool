@@ -55,7 +55,7 @@ class PredictorApiClient(object):
     @staticmethod
     def wrap_data(data):
         """Wraps the data (serialize numpy.ndarray to JSON-string)"""
-        return json_tricks.dumps(data) if not isinstance(data, str) else data
+        return json_tricks.dumps(data, allow_nan=True) if not isinstance(data, str) else data
 
 
 def predict_lbd_probability(user, data, model):
