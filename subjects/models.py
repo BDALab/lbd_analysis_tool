@@ -1,6 +1,8 @@
 import csv
 import uuid
 import secrets
+import numpy
+from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.core.validators import FileExtensionValidator
@@ -139,6 +141,9 @@ class ExaminationSession(models.Model):
         # Default ordering of the records
         ordering = ['session_number']
 
+    # Define the predictor data sequence (sequence of models to ge the features from)
+    PREDICTOR_DATA_SEQUENCE = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_data_sequence']
+
     # Define the model schema
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
     session_number = models.SmallIntegerField('session number')
@@ -198,6 +203,42 @@ class ExaminationSession(models.Model):
                     subject = Subject.get_subject(code=subject_code)
                     session = ExaminationSession.get_session(subject=subject, session_number=session_number)
                     return session
+
+    def get_features_for_prediction(self):
+        """Gets the prediction features for a given examination session"""
+
+        # Prepare the features and labels buffer buffer
+        feature_labels = []
+        feature_values = []
+
+        # Get the features for all data types specified in the predictor configuration
+        for label in self.PREDICTOR_DATA_SEQUENCE:
+
+            # Get the model class from the data to model class mapping
+            model, model_configuration = DATA_TO_MODEL_CLASS_MAPPING[label]
+
+            # Get the features for the referenced record
+            features = model.get_features_from_record(model.get_data(examination_session=self))
+            features = model.get_features_as_kwargs(features)
+
+            # Accumulate the features and labels
+            values = []
+            labels = []
+
+            for supported_feature in model_configuration.get_predictor_feature_names():
+                if supported_feature in features:
+                    values.append(features[supported_feature])
+                    labels.append(supported_feature)
+                else:
+                    values.append(None)
+                    labels.append(None)
+
+            # Add the specific features and labels to the overall collection
+            feature_values += values
+            feature_labels += labels
+
+        # Return the labels and features for prediction
+        return feature_labels, numpy.array(feature_values, dtype=numpy.float)
 
 
 class CommonExaminationSessionData(models.Model):
@@ -613,4 +654,12 @@ def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
         PredictorApiClient(instance).sign_up()
 
 
+# Connect the signals
 post_save.connect(prepare_predictor_api_for_created_user, sender=User)
+
+
+# Define the data to (model class, model configuration class) mapping
+DATA_TO_MODEL_CLASS_MAPPING = {
+    'data_questionnaire': (DataQuestionnaire, DataQuestionnaireConfiguration),
+    'data_acoustic': (DataAcoustic, DataAcousticConfiguration)
+}
