@@ -1,4 +1,5 @@
 import requests
+import json_tricks
 from django.conf import settings
 
 
@@ -23,11 +24,20 @@ class PredictorApiClient(object):
         return requests.post(f'{self.address}/login', json=self.user.get_predictor_authentication_data())
 
     def predict(self, data=None, model=None):
-        """Predicts the LBD probability via the predictor API"""
+        """
+        Predicts the LBD probability via the predictor API.
+
+        :param data: data to be used for the prediction
+        :type data: data supported by the API
+        :param model: model identifier to be used
+        :type model: str
+        :return: API response
+        :rtype: Response
+        """
 
         # Prepare the data to be sent via the API
         data = {
-            'features': {'data': data},
+            'features': {'data': self.wrap_data(data)},
             'model': model
         }
 
@@ -36,6 +46,16 @@ class PredictorApiClient(object):
 
         # Run the predictor
         return requests.post(f'{self.address}/predict', json=data, headers=headers, verify=True)
+
+    @staticmethod
+    def unwrap_data(data):
+        """Unwraps the data (deserialize from JSON-string to numpy.ndarray)"""
+        return json_tricks.loads(data) if isinstance(data, str) else data
+
+    @staticmethod
+    def wrap_data(data):
+        """Wraps the data (serialize numpy.ndarray to JSON-string)"""
+        return json_tricks.dumps(data) if not isinstance(data, str) else data
 
 
 def predict_lbd_probability(user, data, model):
