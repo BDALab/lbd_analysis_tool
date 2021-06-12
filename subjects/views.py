@@ -1,4 +1,5 @@
 import logging
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import reverse, redirect
 from django.core.paginator import Paginator
@@ -130,12 +131,10 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
 
         if sessions:
 
-            # TODO: update data and model when we have the real data
-            # Prepare the data and the model for the prediction
-            data = [[1, 2], [3, 4]]
-            model = 'dummy_predictor'
+            # Prepare the data (from the last examination session) and the model for the prediction
+            data = sessions.last().get_features_for_prediction()
+            model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
 
-            # TODO: log the internal server errors
             # Prepare the predictor API client
             predicted = predict_lbd_probability(self.request.user, data, model)
 
@@ -303,6 +302,17 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
 
         # Add the examinations
         context.update({'examinations': examinations})
+
+        # Prepare the data (from the current examination session) and the model for the prediction
+        data = self.object.get_features_for_prediction()
+        model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
+
+        # Prepare the predictor API client
+        predicted = predict_lbd_probability(self.request.user, data, model)
+
+        # Add the prediction
+        if predicted:
+            context.update({'prediction': predicted})
 
         # Return the updated context
         return context
