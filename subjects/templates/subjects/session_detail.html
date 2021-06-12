@@ -10,6 +10,15 @@
             <!-- *** -->
             <div class="flex flex-wrap -m-4">
 
+                <!-- Probability of LBD -->
+                {% if prediction %}
+                    <div class="flex flex-col text-center w-full mb-10">
+                        <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
+                            Probability of LBD {{ prediction }}
+                        </h1>
+                    </div>
+                {% endif %}
+
                 <!-- Examinations information -->
                 <div class="flex flex-col text-center w-full mb-5">
                     <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
@@ -26,15 +35,6 @@
                             </a>
                         </span>
                     </div>
-
-                    <!-- Probability of LBD -->
-                    {% if prediction %}
-                        <div class="flex flex-col text-center w-full mb-10">
-                            <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
-                                Probability of LBD {{ prediction }}
-                            </h1>
-                        </div>
-                    {% endif %}
 
                 </div>
 
