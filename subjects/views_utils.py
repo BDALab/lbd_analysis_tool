@@ -51,4 +51,4 @@ def predict_lbd_probability_for_subject(user, subject, session_model):
     sessions = session_model.get_sessions(subject=subject, order_by=('session_number',))
 
     # Predict the LBD probability
-    return predict_lbd_probability_for_session(user, sessions.last())
+    return predict_lbd_probability_for_session(user, sessions.last()) if sessions.last() else None
