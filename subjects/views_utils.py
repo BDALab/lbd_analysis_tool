@@ -44,6 +44,7 @@ def predict_lbd_probability_for_session(user, session):
     return predict_lbd_probability(user, data, model)
 
 
+# TODO: what if there is already an older session with the data? (go back until there is a session with the data?)
 def predict_lbd_probability_for_subject(user, subject, session_model):
     """Predicts the LBD probability for the latest session data of a subject"""
 
