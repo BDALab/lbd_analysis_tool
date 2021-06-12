@@ -135,7 +135,7 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             data = sessions.last().get_features_for_prediction()
             model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
 
-            # Prepare the predictor API client
+            # Predict the LBD probability
             predicted = predict_lbd_probability(self.request.user, data, model)
 
             # Add the prediction
@@ -307,7 +307,7 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
         data = self.object.get_features_for_prediction()
         model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
 
-        # Prepare the predictor API client
+        # Predict the LBD probability
         predicted = predict_lbd_probability(self.request.user, data, model)
 
         # Add the prediction
