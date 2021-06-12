@@ -25,5 +25,19 @@
       "question": "question 5",
       "options": ["A", "B", "C", "D", "E"]
     }
+  ],
+  "features": [
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5"
+  ],
+  "predictor_features": [
+    "q1",
+    "q2",
+    "q3",
+    "q4",
+    "q5"
   ]
 }
