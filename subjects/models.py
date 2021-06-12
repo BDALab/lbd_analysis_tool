@@ -1,8 +1,12 @@
 import csv
+import uuid
+import secrets
 from django.db import models
+from django.db.models.signals import post_save
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
+from predictor.client import PredictorApiClient
 from .models_configuration import DataAcousticConfiguration, DataQuestionnaireConfiguration
 from .models_utils import is_csv_file, is_excel_file, read_features_from_csv, read_features_from_excel
 
@@ -580,3 +584,33 @@ class DataQuestionnaire(CommonQuestionnaireBasedData):
 
     def __str__(self):
         return f'Questionnaire data for {self.examination_session.session_number}. session'
+
+
+def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
+    """
+    Prepares the predictor API for the created user
+
+    :param sender: sender class
+    :type sender: User
+    :param instance: instance object
+    :type instance: User instance
+    :param created: creation flag (True if created; False otherwise)
+    :type created bool
+    :param kwargs: additional keyword arguments
+    :type kwargs: dict
+    :return: None
+    :rtype: None type
+    """
+
+    if created:
+
+        # Add username and password for predictor API after user is created
+        instance.predictor_username = str(uuid.uuid4())
+        instance.predictor_password = secrets.token_urlsafe(sender.PREDICTOR_PASSWORD_LENGTH)
+        instance.save()
+
+        # Sign-up the user in the predictor API
+        PredictorApiClient(instance).sign_up()
+
+
+post_save.connect(prepare_predictor_api_for_created_user, sender=User)
