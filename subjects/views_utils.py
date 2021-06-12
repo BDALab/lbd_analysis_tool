@@ -36,7 +36,7 @@ def export_data(request, code, session_number, model):
 def predict_lbd_probability_for_session(user, session):
     """Predicts the LBD probability for a session data"""
 
-    # Prepare the data (from the current examination session) and the model for the prediction
+    # Prepare the data and the model for the prediction
     data = session.get_features_for_prediction()
     model = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_model_identifier']
 
@@ -44,12 +44,18 @@ def predict_lbd_probability_for_session(user, session):
     return predict_lbd_probability(user, data, model)
 
 
-# TODO: what if there is already an older session with the data? (go back until there is a session with the data?)
 def predict_lbd_probability_for_subject(user, subject, session_model):
     """Predicts the LBD probability for the latest session data of a subject"""
 
-    # Get the examination sessions of a subject
-    sessions = session_model.get_sessions(subject=subject, order_by=('session_number',))
+    # Get the examination sessions of a subject (order from newest to oldest)
+    sessions = session_model.get_sessions(subject=subject, order_by=('-session_number',))
 
-    # Predict the LBD probability
-    return predict_lbd_probability_for_session(user, sessions.last()) if sessions.last() else None
+    # If there are no session so far, return None
+    if not sessions.first():
+        return None
+
+    # Predict the LBD probability (from the latest session with the data)
+    for session in sessions:
+        predicted = predict_lbd_probability_for_session(user, session)
+        if predicted:
+            return predicted
