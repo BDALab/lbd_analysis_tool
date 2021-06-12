@@ -9,6 +9,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
 from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm, UploadFileForm
+from predictor.client import predict_lbd_probability
 
 
 # Get the module-level logger instance
@@ -126,6 +127,21 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
         # Add the examination session
         sessions = ExaminationSession.get_sessions(subject=self.object.id, order_by=('session_number',))
         context.update({'examination_sessions': sessions})
+
+        if sessions:
+
+            # TODO: update data and model when we have the real data
+            # Prepare the data and the model for the prediction
+            data = [[1, 2], [3, 4]]
+            model = 'dummy_predictor'
+
+            # TODO: log the internal server errors
+            # Prepare the predictor API client
+            predicted = predict_lbd_probability(self.request.user, data, model)
+
+            # Add the prediction
+            if predicted:
+                context.update({'prediction': predicted})
 
         # Return the updated context
         return context
