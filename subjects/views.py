@@ -9,7 +9,7 @@ from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
 from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm, UploadFileForm
-from .views_utils import export_data, predict_lbd_probability_for_session, predict_lbd_probability_for_subject
+from .views_utils import export_data, get_cached_lbd_probability_for_subject, get_cached_lbd_probability_for_session
 
 
 # Get the module-level logger instance
@@ -99,10 +99,16 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
 
         # Get the LBD probability for each subject in the list
         for subject in context.get(self.context_object_name):
-            subject.lbd_probability = predict_lbd_probability_for_subject(
+
+            # Get the cached LBD probability
+            lbd_probability = get_cached_lbd_probability_for_subject(
                 user=self.request.user,
                 subject=subject,
                 session_model=ExaminationSession)
+
+            # Update the LBD probability of the subject
+            subject.lbd_probability = lbd_probability
+            subject.save()
 
         # Return the updated context
         return context
@@ -135,17 +141,22 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
         sessions = ExaminationSession.get_sessions(subject=self.object.id, order_by=('session_number',))
         context.update({'examination_sessions': sessions})
 
+        # Predict the LBD probability
         if sessions:
 
-            # Predict the LBD probability
-            predicted = predict_lbd_probability_for_subject(
+            # Get the cached LBD probability
+            lbd_probability = get_cached_lbd_probability_for_subject(
                 user=self.request.user,
                 subject=self.object.id,
                 session_model=ExaminationSession)
 
+            # Update the LBD probability of the subject
+            self.object.lbd_probability = lbd_probability
+            self.object.save()
+
             # Add the prediction
-            if predicted:
-                context.update({'prediction': predicted})
+            if lbd_probability:
+                context.update({'prediction': lbd_probability})
 
         # Return the updated context
         return context
@@ -308,12 +319,12 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
         # Add the examinations
         context.update({'examinations': examinations})
 
-        # Predict the LBD probability
-        predicted = predict_lbd_probability_for_session(user=self.request.user, session=self.object)
+        # Predict the LBD probability (get the cached value)
+        lbd_probability = get_cached_lbd_probability_for_session(user=self.request.user, session=self.object)
 
         # Add the prediction
-        if predicted:
-            context.update({'prediction': predicted})
+        if lbd_probability:
+            context.update({'prediction': lbd_probability})
 
         # Return the updated context
         return context

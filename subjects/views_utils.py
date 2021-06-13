@@ -1,6 +1,12 @@
 from django.conf import settings
 from django.http import HttpResponse
+from django.core.cache import cache
+from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from predictor.client import predict_lbd_probability
+
+
+# Get the time-to-live (TTL) for the cache
+CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
 
 
 def export_data(request, code, session_number, model):
@@ -60,3 +66,37 @@ def predict_lbd_probability_for_subject(user, subject, session_model):
         predicted = predict_lbd_probability_for_session(user, session)
         if predicted:
             return predicted
+
+
+def get_cached_lbd_probability_for_session(user, session):
+    """Gets the cached LBD probability for the session"""
+
+    # Construct the cache key
+    cache_key = f'session_{session.id}'
+
+    # Get the LBD probability (handle caching)
+    if cache.get(cache_key):
+        lbd_probability = cache.get(cache_key)
+    else:
+        lbd_probability = predict_lbd_probability_for_session(user, session)
+        cache.set(cache_key, lbd_probability, timeout=CACHE_TTL)
+
+    # Return the LBD probability
+    return lbd_probability
+
+
+def get_cached_lbd_probability_for_subject(user, subject, session_model):
+    """Gets the cached LBD probability for the subject"""
+
+    # Construct the cache key
+    cache_key = f'subject_{subject.code}'
+
+    # Get the LBD probability (handle caching)
+    if cache.get(cache_key):
+        lbd_probability = cache.get(cache_key)
+    else:
+        lbd_probability = predict_lbd_probability_for_subject(user, subject, session_model)
+        cache.set(cache_key, lbd_probability, timeout=CACHE_TTL)
+
+    # Return the LBD probability
+    return lbd_probability

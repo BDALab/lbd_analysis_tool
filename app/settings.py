@@ -99,6 +99,19 @@ DATABASES = {
 }
 
 
+# Cache (https://github.com/jazzband/django-redis)
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        }
+    }
+}
+CACHE_TTL = 60 * 60  # 60 minutes
+
+
 # Password validation (https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators)
 AUTH_PASSWORD_VALIDATORS = [
     {
