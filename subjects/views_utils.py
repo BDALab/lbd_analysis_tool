@@ -79,7 +79,10 @@ def get_cached_lbd_probability_for_session(user, session):
         lbd_probability = cache.get(cache_key)
     else:
         lbd_probability = predict_lbd_probability_for_session(user, session)
-        cache.set(cache_key, lbd_probability, timeout=CACHE_TTL)
+
+        # Cache the predicted value (if it's a valid prediction)
+        if lbd_probability is not None:
+            cache.set(cache_key, lbd_probability, timeout=CACHE_TTL)
 
     # Return the LBD probability
     return lbd_probability
@@ -96,7 +99,10 @@ def get_cached_lbd_probability_for_subject(user, subject, session_model):
         lbd_probability = cache.get(cache_key)
     else:
         lbd_probability = predict_lbd_probability_for_subject(user, subject, session_model)
-        cache.set(cache_key, lbd_probability, timeout=CACHE_TTL)
+
+        # Cache the predicted value (if it's a valid prediction)
+        if lbd_probability is not None:
+            cache.set(cache_key, lbd_probability, timeout=CACHE_TTL)
 
     # Return the LBD probability
     return lbd_probability
