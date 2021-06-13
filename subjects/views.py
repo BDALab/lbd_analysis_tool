@@ -107,8 +107,9 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
                 session_model=ExaminationSession)
 
             # Update the LBD probability of the subject
-            subject.lbd_probability = lbd_probability
-            subject.save()
+            if lbd_probability:
+                subject.lbd_probability = lbd_probability
+                subject.save()
 
         # Return the updated context
         return context
@@ -151,8 +152,9 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
                 session_model=ExaminationSession)
 
             # Update the LBD probability of the subject
-            self.object.lbd_probability = lbd_probability
-            self.object.save()
+            if lbd_probability:
+                self.object.lbd_probability = lbd_probability
+                self.object.save()
 
             # Add the prediction
             if lbd_probability:
