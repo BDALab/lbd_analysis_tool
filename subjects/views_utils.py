@@ -1,12 +1,8 @@
 from django.conf import settings
 from django.http import HttpResponse
 from django.core.cache import cache
-from django.core.cache.backends.base import DEFAULT_TIMEOUT
 from predictor.client import predict_lbd_probability
-
-
-# Get the time-to-live (TTL) for the cache
-CACHE_TTL = getattr(settings, 'CACHE_TTL', DEFAULT_TIMEOUT)
+from .models_cache import CACHE_TTL
 
 
 def export_data(request, code, session_number, model):
