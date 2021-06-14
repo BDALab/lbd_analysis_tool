@@ -1,6 +1,5 @@
 import csv
 import numpy
-from django.conf import settings
 from django.db import models
 from django.db.models.signals import post_save
 from django.core.validators import FileExtensionValidator
