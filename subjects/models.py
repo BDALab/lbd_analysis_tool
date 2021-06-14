@@ -1,6 +1,4 @@
 import csv
-import uuid
-import secrets
 import numpy
 from django.conf import settings
 from django.db import models
@@ -8,9 +6,15 @@ from django.db.models.signals import post_save
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
-from predictor.client import PredictorApiClient
 from .models_configuration import DataAcousticConfiguration, DataQuestionnaireConfiguration
-from .models_utils import is_csv_file, is_excel_file, read_features_from_csv, read_features_from_excel
+from .models_signals import *
+from .models_cache import *
+from .models_utils import (
+    is_csv_file,
+    is_excel_file,
+    read_features_from_csv,
+    read_features_from_excel,
+)
 
 
 class User(AbstractUser):
@@ -73,6 +77,9 @@ class Subject(models.Model):
 
     def __str__(self):
         return f'Subject: {self.code}'
+
+    def get_lbd_probability_cache_key(self):
+        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.code}'
 
     @staticmethod
     def get_subjects(organization, order_by=()):
@@ -153,6 +160,12 @@ class ExaminationSession(models.Model):
 
     def __str__(self):
         return f'{self.session_number}. session for subject: {self.subject.code}'
+
+    def get_lbd_probability_cache_key(self):
+        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.subject.code}_session_{self.id}'
+
+    def get_lbd_probability_cache_key_for_subject(self):
+        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.subject.code}'
 
     @staticmethod
     def get_sessions(subject, order_by=()):
@@ -272,6 +285,14 @@ class CommonExaminationSessionData(models.Model):
     # Define the model schema
     examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE, primary_key=True)
     description = models.CharField('description', max_length=255, blank=True)
+
+    def get_lbd_probability_cache_key_for_subject(self):
+        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.examination_session.subject.code}'
+
+    def get_lbd_probability_cache_key_for_session(self):
+        return f'{CACHE_LBD_PROBABILITY_PREFIX}_' \
+               f'subject_{self.examination_session.subject.code}_' \
+               f'session_{self.examination_session.id}'
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
@@ -640,35 +661,11 @@ class DataQuestionnaire(CommonQuestionnaireBasedData):
         return f'Questionnaire data for subject: {subject} ({session}. session)'
 
 
-def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
-    """
-    Prepares the predictor API for the created user
-
-    :param sender: sender class
-    :type sender: User
-    :param instance: instance object
-    :type instance: User instance
-    :param created: creation flag (True if created; False otherwise)
-    :type created bool
-    :param kwargs: additional keyword arguments
-    :type kwargs: dict
-    :return: None
-    :rtype: None type
-    """
-
-    if created:
-
-        # Add username and password for predictor API after user is created
-        instance.predictor_username = str(uuid.uuid4())
-        instance.predictor_password = secrets.token_urlsafe(sender.PREDICTOR_PASSWORD_LENGTH)
-        instance.save()
-
-        # Sign-up the user in the predictor API
-        PredictorApiClient(instance).sign_up()
-
-
 # Connect the signals
 post_save.connect(prepare_predictor_api_for_created_user, sender=User)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataAcoustic)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataQuestionnaire)
+post_save.connect(invalidate_cached_lbd_prediction_for_subject, sender=Subject)
 
 
 # Define the data to (model class, model configuration class) mapping

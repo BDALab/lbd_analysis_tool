@@ -72,7 +72,7 @@ def get_cached_lbd_probability_for_session(user, session):
     """Gets the cached LBD probability for the session"""
 
     # Construct the cache key
-    cache_key = f'session_{session.id}'
+    cache_key = session.get_lbd_probability_cache_key()
 
     # Get the LBD probability (handle caching)
     if cache.get(cache_key):
@@ -92,7 +92,7 @@ def get_cached_lbd_probability_for_subject(user, subject, session_model):
     """Gets the cached LBD probability for the subject"""
 
     # Construct the cache key
-    cache_key = f'subject_{subject.code}'
+    cache_key = subject.get_lbd_probability_cache_key()
 
     # Get the LBD probability (handle caching)
     if cache.get(cache_key):

@@ -108,8 +108,6 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
 
             # Update the LBD probability of the subject
             subject.lbd_probability = lbd_probability
-            if lbd_probability:
-                subject.save()
 
         # Return the updated context
         return context
@@ -148,13 +146,11 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
             # Get the cached LBD probability
             lbd_probability = get_cached_lbd_probability_for_subject(
                 user=self.request.user,
-                subject=self.object.id,
+                subject=self.object,
                 session_model=ExaminationSession)
 
             # Update the LBD probability of the subject
             self.object.lbd_probability = lbd_probability
-            if lbd_probability:
-                self.object.save()
 
             # Add the prediction
             if lbd_probability:
