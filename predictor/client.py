@@ -7,7 +7,7 @@ class PredictorApiClient(object):
     """Class implementing the Predictor API client"""
 
     # Define the HTTP error codes to be handled by the re-logging
-    logging_required_errors = [401, 422]
+    log_in_required_errors = [401, 422]
 
     # Define the predictor address
     address = getattr(settings, 'PREDICTOR_API_URL')
@@ -85,7 +85,7 @@ def predict_lbd_probability(user, data, model):
 
     # Handle the authorization token errors
     if not response.ok:
-        if response.status_code in predictor.logging_required_errors:
+        if response.status_code in predictor.log_in_required_errors:
             user.predictor_authorization_token = predictor.log_in().json().get('token')
             user.save()
             response = predictor.predict(data=data, model=model)
