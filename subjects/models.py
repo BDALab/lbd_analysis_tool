@@ -461,11 +461,14 @@ class CommonExaminationSessionData(models.Model):
         if not features:
             return []
 
-        # Return the features
+        # Get the supported feature names
+        supported_features = cls.CONFIGURATION.get_feature_names()
+
+        # Return the features (filter only for the supported ones)
         return [
             {cls.FEATURE_LABEL_FIELD: label, cls.FEATURE_VALUE_FIELD: value}
             for label, value in features
-            if label in cls.CONFIGURATION.get_feature_names()
+            if label in supported_features
         ]
 
     @classmethod
