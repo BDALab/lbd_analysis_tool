@@ -9,8 +9,9 @@ class PredictorApiClient(object):
     # Define the HTTP error codes to be handled by the re-logging
     log_in_required_errors = [401, 422]
 
-    # Define the predictor address
-    address = getattr(settings, 'PREDICTOR_API_URL')
+    # Define the predictor settings
+    address = getattr(settings, 'PREDICTOR_CONFIGURATION').get('address')
+    timeout = getattr(settings, 'PREDICTOR_CONFIGURATION').get('timeout')
 
     def __init__(self, user):
         self.user = user
@@ -45,7 +46,12 @@ class PredictorApiClient(object):
         headers = self.user.get_predictor_authorization_data()
 
         # Run the predictor
-        return requests.post(f'{self.address}/predict', json=data, headers=headers, verify=True)
+        return requests.post(
+            url=f'{self.address}/predict',
+            json=data,
+            headers=headers,
+            verify=True,
+            timeout=self.timeout)
 
     @staticmethod
     def unwrap_data(data):
@@ -80,22 +86,27 @@ def predict_lbd_probability(user, data, model):
     if values.size == 0:
         return None
 
-    # Predict the LBD probability via the predictor API using the provided data and model identifier
-    response = predictor.predict(data=data, model=model)
+    try:
 
-    # Handle the authorization token errors
-    if not response.ok:
-        if response.status_code in predictor.log_in_required_errors:
-            user.predictor_authorization_token = predictor.log_in().json().get('token')
-            user.save()
-            response = predictor.predict(data=data, model=model)
+        # Predict the LBD probability via the predictor API using the provided data and model identifier
+        response = predictor.predict(data=data, model=model)
 
-    if not response.ok:
-        return None
+        # Handle the authorization token errors
+        if not response.ok:
+            if response.status_code in predictor.log_in_required_errors:
+                user.predictor_authorization_token = predictor.log_in().json().get('token')
+                user.save()
+                response = predictor.predict(data=data, model=model)
 
-    # Extract the LBD probability
-    probability = response.json().get('proba')
-    probability = round(float(probability) * 100, 2) if probability is not None else None
+        if not response.ok:
+            return None
+
+        # Extract the LBD probability
+        probability = response.json().get('proba')
+        probability = round(float(probability) * 100, 2) if probability is not None else None
+
+    except requests.ConnectionError:
+        probability = None
 
     # Return the LBD probability
     return probability

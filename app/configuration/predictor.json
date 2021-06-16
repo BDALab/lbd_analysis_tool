@@ -3,5 +3,7 @@
     "data_questionnaire",
     "data_acoustic"
   ],
-  "predictor_model_identifier": "dummy_predictor"
+  "predictor_model_identifier": "dummy_predictor",
+  "address": "http://127.0.0.1:5000",
+  "timeout": 5
 }
