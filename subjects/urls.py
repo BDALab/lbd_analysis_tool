@@ -1,6 +1,7 @@
 from django.urls import path
 from .views import (
     SubjectListView,
+    SubjectCohortImportView,
     SubjectCreateView,
     SubjectDetailView,
     SubjectUpdateView,
@@ -28,6 +29,7 @@ urlpatterns = [
 
     # Subjects
     path('create/', SubjectCreateView.as_view(), name='subject_create'),
+    path('import/', SubjectCohortImportView.as_view(), name='subject_import_cohort'),
     path('<str:code>/', SubjectDetailView.as_view(), name='subject_detail'),
     path('<str:code>/update/', SubjectUpdateView.as_view(), name='subject_update'),
     path('<str:code>/delete/', SubjectDeleteView.as_view(), name='subject_delete'),

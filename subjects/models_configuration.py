@@ -1,3 +1,4 @@
+import os
 from django.conf import settings
 
 
@@ -21,6 +22,9 @@ class CommonDataConfiguration(object):
 class CommonDataQuestionnaireBasedConfiguration(CommonDataConfiguration):
     """Base class for questionnaire based configuration"""
 
+    # Define the serialization of the features
+    serialized_features = False
+
     @classmethod
     def get_questionnaire(cls):
         """Returns the questionnaire (list of dicts)"""
@@ -42,18 +46,29 @@ class CommonDataQuestionnaireBasedConfiguration(CommonDataConfiguration):
 
 class CommonDataFeatureBasedConfiguration(CommonDataConfiguration):
     """Base class for feature based configuration"""
-    pass
+
+    # Define the serialization of the features
+    serialized_features = True
+
+    # Define the data root field
+    data_root = getattr(settings, 'MEDIA_ROOT')
+
+    # Define the data field
+    data_field = 'data'
+
+    # Define the data path
+    data_path = os.path.join(data_root, data_field)
 
 
 class DataQuestionnaireConfiguration(CommonDataQuestionnaireBasedConfiguration):
     """Class implementing questionnaire data configuration"""
 
     # Load the configuration
-    configuration = getattr(settings, 'DATA_QUESTIONNAIRE')
+    configuration = getattr(settings, 'DATA_CONFIGURATION')['data']['questionnaire']
 
 
 class DataAcousticConfiguration(CommonDataFeatureBasedConfiguration):
     """Class implementing acoustic data configuration"""
 
     # Load the configuration
-    configuration = getattr(settings, 'DATA_ACOUSTIC')
+    configuration = getattr(settings, 'DATA_CONFIGURATION')['data']['acoustic']

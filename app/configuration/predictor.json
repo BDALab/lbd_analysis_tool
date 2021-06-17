@@ -1,9 +1,9 @@
 {
-  "predictor_data_sequence": [
-    "data_questionnaire",
-    "data_acoustic"
+  "data_sequence": [
+    "questionnaire",
+    "acoustic"
   ],
-  "predictor_model_identifier": "dummy_predictor",
+  "model_identifier": "dummy_predictor",
   "address": "http://127.0.0.1:5000",
   "timeout": 5
 }

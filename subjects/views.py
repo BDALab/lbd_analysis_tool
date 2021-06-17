@@ -9,7 +9,12 @@ from django.views import generic
 from django.urls import reverse_lazy
 from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
 from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm, UploadFileForm
-from .views_utils import export_data, get_cached_lbd_probability_for_subject, get_cached_lbd_probability_for_session
+from .views_utils import (
+    export_data,
+    get_cached_lbd_probability_for_subject,
+    get_cached_lbd_probability_for_session,
+    import_subjects_from_external_source
+)
 
 
 # Get the module-level logger instance
@@ -99,18 +104,33 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
 
         # Get the LBD probability for each subject in the list
         for subject in context.get(self.context_object_name):
-
-            # Get the cached LBD probability
-            lbd_probability = get_cached_lbd_probability_for_subject(
-                user=self.request.user,
-                subject=subject,
-                session_model=ExaminationSession)
-
-            # Update the LBD probability of the subject
-            subject.lbd_probability = lbd_probability
+            subject.lbd_probability = get_cached_lbd_probability_for_subject(user=self.request.user, subject=subject)
 
         # Return the updated context
         return context
+
+
+class SubjectCohortImportView(LoginRequiredMixin, generic.FormView):
+    """Class implementing subject cohort import"""
+
+    # Define the template name
+    template_name = 'subjects/subject_import_cohort.html'
+
+    # Define the form class
+    form_class = UploadFileForm
+
+    def form_valid(self, form):
+        """Form valid hook: imports the subjects"""
+
+        # Import the subjects
+        import_subjects_from_external_source(self.request.user, form)
+
+        # Return the updated data
+        return super(SubjectCohortImportView, self).form_valid(form)
+
+    def get_success_url(self):
+        """Returns the success URL"""
+        return reverse_lazy('subjects:subject_list')
 
 
 class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
@@ -144,10 +164,7 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
         if sessions:
 
             # Get the cached LBD probability
-            lbd_probability = get_cached_lbd_probability_for_subject(
-                user=self.request.user,
-                subject=self.object,
-                session_model=ExaminationSession)
+            lbd_probability = get_cached_lbd_probability_for_subject(user=self.request.user, subject=self.object)
 
             # Update the LBD probability of the subject
             self.object.lbd_probability = lbd_probability

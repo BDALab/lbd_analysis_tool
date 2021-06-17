@@ -169,8 +169,7 @@ PREDICTOR_CONFIGURATION = load_configuration('predictor.json')
 
 
 # Data settings
-DATA_ACOUSTIC = load_configuration('data_acoustic.json')
-DATA_QUESTIONNAIRE = load_configuration('data_questionnaire.json')
+DATA_CONFIGURATION = load_configuration('data.json')
 
 
 # Logging settings

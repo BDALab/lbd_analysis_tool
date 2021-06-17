@@ -1,5 +1,6 @@
 import csv
 import numpy
+import pandas
 from django.db import models
 from django.db.models.signals import post_save
 from django.core.validators import FileExtensionValidator
@@ -12,7 +13,7 @@ from .models_utils import (
     is_csv_file,
     is_excel_file,
     read_features_from_csv,
-    read_features_from_excel,
+    read_features_from_excel
 )
 
 
@@ -148,7 +149,8 @@ class ExaminationSession(models.Model):
         ordering = ['session_number']
 
     # Define the predictor data sequence (sequence of models to ge the features from)
-    PREDICTOR_DATA_SEQUENCE = getattr(settings, 'PREDICTOR_CONFIGURATION')['predictor_data_sequence']
+    PREDICTOR_DATA_SEQUENCE = getattr(settings, 'PREDICTOR_CONFIGURATION')['data_sequence']
+    EXAMINATION_DATA_SEQUENCE = getattr(settings, 'DATA_CONFIGURATION')['data_sequence']
 
     # Define the model schema
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
@@ -227,7 +229,7 @@ class ExaminationSession(models.Model):
         for label in self.PREDICTOR_DATA_SEQUENCE:
 
             # Get the model class from the data to model class mapping
-            model, model_configuration = DATA_TO_MODEL_CLASS_MAPPING[label]
+            model = DATA_TO_MODEL_CLASS_MAPPING[label]
 
             # Get the model record (skip if there is not record yet)
             record = model.get_data(examination_session=self)
@@ -242,7 +244,7 @@ class ExaminationSession(models.Model):
             values = []
             labels = []
 
-            for supported_feature in model_configuration.get_predictor_feature_names():
+            for supported_feature in model.CONFIGURATION.get_predictor_feature_names():
                 if supported_feature in features:
                     values.append(features[supported_feature])
                     labels.append(supported_feature)
@@ -294,6 +296,11 @@ class CommonExaminationSessionData(models.Model):
                f'session_{self.examination_session.id}'
 
     @classmethod
+    def get_sanitized_feature_value(cls, feature):
+        """Sanitizes the feature value (replaces NaN with None)"""
+        return None if feature is None or pandas.isna(feature) else feature
+
+    @classmethod
     def get_features_from_record(cls, record, **kwargs):
         """
         Returns the features as a list of dicts from the input record.
@@ -309,7 +316,7 @@ class CommonExaminationSessionData(models.Model):
     def get_features_as_kwargs(cls, features):
         """Returns the features as kwargs (dict to be unfolded)"""
         return {
-            feature[cls.FEATURE_LABEL_FIELD]: feature[cls.FEATURE_VALUE_FIELD]
+            feature[cls.FEATURE_LABEL_FIELD]: cls.get_sanitized_feature_value(feature[cls.FEATURE_VALUE_FIELD])
             for feature in features
         }
 
@@ -670,8 +677,8 @@ post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataQuest
 post_save.connect(invalidate_cached_lbd_prediction_for_subject, sender=Subject)
 
 
-# Define the data to (model class, model configuration class) mapping
+# Define the data to the model class mapping
 DATA_TO_MODEL_CLASS_MAPPING = {
-    'data_questionnaire': (DataQuestionnaire, DataQuestionnaireConfiguration),
-    'data_acoustic': (DataAcoustic, DataAcousticConfiguration)
+    'questionnaire': DataQuestionnaire,
+    'acoustic': DataAcoustic
 }

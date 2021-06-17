@@ -17,9 +17,13 @@
                             <div class="flex">
 
                                 <!-- Create a new subject -->
-                                <a class="flex items-center text-center text-white bg-indigo-500 border-0 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
+                                <a class="flex items-center text-center text-white bg-indigo-500 border-0 mr-1 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
                                    href="{% url 'subjects:subject_create' %}">
                                     Create subject
+                                </a>
+                                <a class="flex items-center text-center text-white bg-indigo-500 border-0 ml-1 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
+                                   href="{% url 'subjects:subject_import_cohort' %}">
+                                    Import subjects
                                 </a>
 
                                 <!-- Subjects information -->
@@ -372,8 +376,12 @@
             <!-- Create a new subject -->
             <div class="flex flex-wrap justify-center mx-auto">
                 <a href="{% url 'subjects:subject_create' %}"
-                   class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
+                   class="inline-flex text-white bg-indigo-500 border-0 mr-1 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
                     Create a new subject
+                </a>
+                <a class="flex items-center text-center text-white bg-indigo-500 border-0 ml-1 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
+                   href="{% url 'subjects:subject_import_cohort' %}">
+                    Import subjects
                 </a>
             </div>
         {% endif %}
