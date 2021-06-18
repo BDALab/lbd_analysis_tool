@@ -152,7 +152,17 @@
                                                             {{ subject.code }}
                                                         </div>
                                                         <div class="text-sm text-gray-500">
-                                                            {{ subject.sex }} : {{ subject.age }}
+                                                            {% if subject.sex is not none %}
+                                                                {% if subject.age is not none %}
+                                                                    {{ subject.sex }} : {{ subject.age }}
+                                                                {% else %}
+                                                                    {{ subject.sex }}
+                                                                {% endif %}
+                                                            {% else %}
+                                                                {% if subject.age is not none %}
+                                                                    {{ subject.age }}
+                                                                {% endif %}
+                                                            {% endif %}
                                                         </div>
                                                     </div>
                                                 </div>
