@@ -1,6 +1,6 @@
 import uuid
 import secrets
-from predictor.client import PredictorApiClient
+from predictor.client import register_predictor_user
 from django.core.cache import cache
 
 
@@ -26,10 +26,13 @@ def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
         # Add username and password for predictor API after user is created
         instance.predictor_username = str(uuid.uuid4())
         instance.predictor_password = secrets.token_urlsafe(sender.PREDICTOR_PASSWORD_LENGTH)
-        instance.save()
 
         # Sign-up the user in the predictor API
-        PredictorApiClient(instance).sign_up()
+        if register_predictor_user(instance):
+            instance.predictor_registered = True
+
+        # Save the updated instance
+        instance.save()
 
 
 def invalidate_cached_lbd_prediction_for_session(sender, instance, created, **kwargs):

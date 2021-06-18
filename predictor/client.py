@@ -64,6 +64,28 @@ class PredictorApiClient(object):
         return json_tricks.dumps(data, allow_nan=True) if not isinstance(data, str) else data
 
 
+def register_predictor_user(user):
+    """
+    Registers the predictor user.
+
+    :param user: user model instance
+    :type user: User instance
+    :return: True if registered, False otherwise
+    :rtype: bool
+    """
+
+    # Prepare the predictor API client using the provided user instance
+    predictor = PredictorApiClient(user)
+
+    # Register the user
+    try:
+        predictor.sign_up()
+    except requests.ConnectionError:
+        return False
+    else:
+        return True
+
+
 def predict_lbd_probability(user, data, model):
     """
     Predicts the LBD probability via the predictor API.
@@ -80,6 +102,11 @@ def predict_lbd_probability(user, data, model):
 
     # Prepare the predictor API client using the provided user instance
     predictor = PredictorApiClient(user)
+
+    # Check and validate the registration of the user
+    if not user.predictor_registered:
+        if not register_predictor_user(user):
+            return None
 
     # Validate if there are data to be used for the prediction
     labels, values = data

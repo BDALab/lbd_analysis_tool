@@ -27,6 +27,7 @@ class User(AbstractUser):
     organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
     predictor_username = models.CharField('predictor username', max_length=50, null=True, blank=True)
     predictor_password = models.CharField('predictor password', max_length=50, null=True, blank=True)
+    predictor_registered = models.BooleanField('predictor registered', default=False)
     predictor_authorization_token = models.CharField('predictor token', max_length=300, null=True, blank=True)
 
     def get_predictor_authentication_data(self):
@@ -66,14 +67,13 @@ class Subject(models.Model):
     # Define the model schema
     organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
     code = models.CharField('subject code', max_length=50, unique=True)
-    age = models.SmallIntegerField('age (years)')
-    sex = models.CharField('sex', max_length=1, choices=SEX)
-    nationality = models.CharField('nationality', max_length=50, blank=True)
+    age = models.SmallIntegerField('age (years)', null=True, blank=True)
+    sex = models.CharField('sex', max_length=1, choices=SEX, null=True, blank=True)
+    nationality = models.CharField('nationality', max_length=50, null=True, blank=True)
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)
-    diagnosed = models.BooleanField('diagnosed', default=False)
     lbd_probability = models.FloatField('lbd_probability', null=True, blank=True)
-    description = models.CharField('description', max_length=255, blank=True)
+    description = models.CharField('description', max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f'Subject: {self.code}'
@@ -155,7 +155,7 @@ class ExaminationSession(models.Model):
     # Define the model schema
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
     session_number = models.SmallIntegerField('session number')
-    description = models.CharField('description', max_length=255, blank=True)
+    description = models.CharField('description', max_length=255, null=True, blank=True)
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)
 
@@ -285,7 +285,7 @@ class CommonExaminationSessionData(models.Model):
 
     # Define the model schema
     examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE, primary_key=True)
-    description = models.CharField('description', max_length=255, blank=True)
+    description = models.CharField('description', max_length=255, null=True, blank=True)
 
     def get_lbd_probability_cache_key_for_subject(self):
         return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.examination_session.subject.code}'
@@ -298,7 +298,7 @@ class CommonExaminationSessionData(models.Model):
     @classmethod
     def get_sanitized_feature_value(cls, feature):
         """Sanitizes the feature value (replaces NaN with None)"""
-        return None if feature is None or pandas.isna(feature) else feature
+        return None if (isinstance(feature, str) and not feature) or (pandas.isna(feature)) else feature
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
