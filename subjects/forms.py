@@ -4,7 +4,7 @@ from django.contrib.auth.forms import UserCreationForm, UsernameField
 from .models import Subject, DataAcoustic, DataQuestionnaire
 
 
-# Get the user model
+# Get the Django-based user model
 User = get_user_model()
 
 
@@ -34,7 +34,7 @@ class SubjectModelForm(forms.ModelForm):
         model = Subject
 
         # Database model fields to be used in the form
-        fields = ('code', 'age', 'sex', 'nationality', 'description')
+        fields = tuple(Subject.CONFIGURATION.get_form_fields())
 
 
 class DataAcousticForm(forms.ModelForm):
@@ -47,7 +47,7 @@ class DataAcousticForm(forms.ModelForm):
         model = DataAcoustic
 
         # Database model fields to be used in the form
-        fields = ('data', )
+        fields = tuple(DataAcoustic.CONFIGURATION.get_form_fields())
 
 
 class DataQuestionnaireForm(forms.ModelForm):
@@ -60,7 +60,7 @@ class DataQuestionnaireForm(forms.ModelForm):
         model = DataQuestionnaire
 
         # Database model fields to be used in the form
-        fields = ('q1', 'q2', 'q3', 'q4', 'q5', 'description')
+        fields = tuple(DataQuestionnaire.CONFIGURATION.get_form_fields())
 
 
 class UploadFileForm(forms.Form):

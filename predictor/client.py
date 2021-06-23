@@ -36,10 +36,17 @@ class PredictorApiClient(object):
         :rtype: Response
         """
 
+        # Get feature labels and values
+        feature_labels, feature_values = data
+
         # Prepare the data to be sent via the API
         data = {
-            'features': {'data': self.wrap_data(data)},
-            'model': model
+            'model': model,
+            'features': {
+                'data': self.wrap_data(feature_values),
+                'labels': feature_labels,
+                'shapes': feature_values.shape
+            }
         }
 
         # Prepare the headers to be sent via the API
@@ -62,78 +69,3 @@ class PredictorApiClient(object):
     def wrap_data(data):
         """Wraps the data (serialize numpy.ndarray to JSON-string)"""
         return json_tricks.dumps(data, allow_nan=True) if not isinstance(data, str) else data
-
-
-def register_predictor_user(user):
-    """
-    Registers the predictor user.
-
-    :param user: user model instance
-    :type user: User instance
-    :return: True if registered, False otherwise
-    :rtype: bool
-    """
-
-    # Prepare the predictor API client using the provided user instance
-    predictor = PredictorApiClient(user)
-
-    # Register the user
-    try:
-        predictor.sign_up()
-    except requests.ConnectionError:
-        return False
-    else:
-        return True
-
-
-def predict_lbd_probability(user, data, model):
-    """
-    Predicts the LBD probability via the predictor API.
-
-    :param user: user model instance
-    :type user: User instance
-    :param data: data to be used for the prediction
-    :type data: data supported by the API
-    :param model: model identifier to be used
-    :type model: str
-    :return: predicted LBD probability
-    :rtype: float
-    """
-
-    # Prepare the predictor API client using the provided user instance
-    predictor = PredictorApiClient(user)
-
-    # Check and validate the registration of the user
-    if not user.predictor_registered:
-        if not register_predictor_user(user):
-            return None
-
-    # Validate if there are data to be used for the prediction
-    labels, values = data
-    if values.size == 0:
-        return None
-
-    try:
-
-        # Predict the LBD probability via the predictor API using the provided data and model identifier
-        response = predictor.predict(data=data, model=model)
-
-        # Handle the authorization token errors
-        if not response.ok:
-            if response.status_code in predictor.log_in_required_errors:
-                user.predictor_authorization_token = predictor.log_in().json().get('token')
-                user.save()
-                response = predictor.predict(data=data, model=model)
-
-        if not response.ok:
-            return None
-
-        # Extract the LBD probability
-        probability = response.json().get('proba')
-        probability = round(float(probability) * 100, 2) if probability is not None else None
-
-    except requests.ConnectionError:
-        probability = None
-
-    # Return the LBD probability
-    return probability

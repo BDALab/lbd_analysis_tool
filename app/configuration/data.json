@@ -4,92 +4,109 @@
     "acoustic"
   ],
   "data": {
-    "questionnaire": {
-      "questionnaire": [
-        {
-          "name": "q1",
-          "question": "question 1",
-          "options": ["A", "B", "C", "D", "E"]
-        },
-        {
-          "name": "q2",
-          "question": "question 2",
-          "options": ["A", "B", "C", "D", "E"]
-        },
-        {
-          "name": "q3",
-          "question": "question 3",
-          "options": ["A", "B", "C", "D", "E"]
-        },
-        {
-          "name": "q4",
-          "question": "question 4",
-          "options": ["A", "B", "C", "D", "E"]
-        },
-        {
-          "name": "q5",
-          "question": "question 5",
-          "options": ["A", "B", "C", "D", "E"]
-        }
-      ],
+    "subject": {
+      "form_fields": ["code", "age", "sex", "nationality", "description"],
+      "features_description": {
+        "age": {"type": "numerical"},
+        "sex": {"type": "nominal", "options": ["M", "F"]}
+      },
       "features": [
-        "q1",
-        "q2",
-        "q3",
-        "q4",
-        "q5"
-      ],
-      "predictor_features": [
-        "q1",
-        "q2",
-        "q3"
+        "age",
+        "sex",
+        "nationality"
       ]
     },
-    "acoustic": {
-      "features": [
-        "feature_1",
-        "feature_2",
-        "feature_3",
-        "feature_4",
-        "feature_5",
-        "feature_6",
-        "feature_7",
-        "feature_8",
-        "feature_9",
-        "feature_10",
-        "feature_11",
-        "feature_12",
-        "feature_13",
-        "feature_14",
-        "feature_15",
-        "feature_16",
-        "feature_17",
-        "feature_18",
-        "feature_19",
-        "feature_20",
-        "feature_21",
-        "feature_22",
-        "feature_23",
-        "feature_24",
-        "feature_25",
-        "feature_26",
-        "feature_27",
-        "feature_28",
-        "feature_29",
-        "feature_30"
-      ],
-      "predictor_features": [
-        "feature_1",
-        "feature_2",
-        "feature_3",
-        "feature_4",
-        "feature_5",
-        "feature_6",
-        "feature_7",
-        "feature_8",
-        "feature_9",
-        "feature_10"
-      ]
+    "session": {
+      "questionnaire": {
+        "questionnaire": [
+          {
+            "name": "q1",
+            "question": "question 1",
+            "options": [["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["E", "E"]]
+          },
+          {
+            "name": "q2",
+            "question": "question 2",
+            "options": [["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["E", "E"]]
+          },
+          {
+            "name": "q3",
+            "question": "question 3",
+            "options": [["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["E", "E"]]
+          },
+          {
+            "name": "q4",
+            "question": "question 4",
+            "options": [["A", "A"], ["B", "B"], ["C", "C"], ["D", "D"], ["E", "E"]]
+          },
+          {
+            "name": "q5",
+            "question": "question 5"
+          }
+        ],
+        "form_fields": ["q1", "q2", "q3", "q4", "q5", "description"],
+        "features_description": {
+          "q1": {"type": "ordinal", "options": ["A", "B", "C", "D", "E"], "order": ["A", "B", "C", "D", "E"]},
+          "q2": {"type": "ordinal", "options": ["A", "B", "C", "D", "E"], "order": ["A", "B", "C", "D", "E"]},
+          "q3": {"type": "nominal", "options": ["A", "B", "C", "D", "E"]},
+          "q4": {"type": "nominal", "options": ["A", "B", "C", "D", "E"]},
+          "q5": {"type": "numerical"}
+        },
+        "features": [
+          "q1",
+          "q2",
+          "q3",
+          "q4",
+          "q5"
+        ]
+      },
+      "acoustic": {
+        "form_fields": ["data"],
+        "features_description": {
+          "feature_1": {"type": "numerical"},
+          "feature_2": {"type": "numerical"},
+          "feature_3": {"type": "numerical"},
+          "feature_4": {"type": "numerical"},
+          "feature_5": {"type": "numerical"},
+          "feature_6": {"type": "numerical"},
+          "feature_7": {"type": "numerical"},
+          "feature_8": {"type": "numerical"},
+          "feature_9": {"type": "numerical"},
+          "feature_10": {"type": "numerical"},
+          "feature_11": {"type": "numerical"},
+          "feature_12": {"type": "numerical"},
+          "feature_13": {"type": "numerical"},
+          "feature_14": {"type": "numerical"},
+          "feature_15": {"type": "numerical"},
+          "feature_16": {"type": "numerical"},
+          "feature_17": {"type": "numerical"},
+          "feature_18": {"type": "numerical"},
+          "feature_19": {"type": "numerical"},
+          "feature_20": {"type": "numerical"}
+        },
+        "features": [
+          "feature_1",
+          "feature_2",
+          "feature_3",
+          "feature_4",
+          "feature_5",
+          "feature_6",
+          "feature_7",
+          "feature_8",
+          "feature_9",
+          "feature_10",
+          "feature_11",
+          "feature_12",
+          "feature_13",
+          "feature_14",
+          "feature_15",
+          "feature_16",
+          "feature_17",
+          "feature_18",
+          "feature_19",
+          "feature_20"
+        ]
+      }
     }
   }
 }

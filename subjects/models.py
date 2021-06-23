@@ -1,15 +1,20 @@
-import csv
 import numpy
-import pandas
 from django.db import models
 from django.db.models.signals import post_save
+from django.conf import settings
 from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
-from .models_configuration import DataAcousticConfiguration, DataQuestionnaireConfiguration
-from .models_signals import *
-from .models_cache import *
-from .models_utils import (
+from predictor.preprocessors import preprocess_feature
+from .models_configuration import SubjectDataConfiguration, DataQuestionnaireConfiguration, DataAcousticConfiguration
+from .models_cache import SubjectCache, ExaminationSessionCache
+from .models_formatters import FeaturesFormatter
+from .models_signals import (
+    prepare_predictor_api_for_created_user,
+    invalidate_cached_lbd_prediction_for_session,
+    invalidate_cached_lbd_prediction_for_subject
+)
+from .models_io import (
     is_csv_file,
     is_excel_file,
     read_features_from_csv,
@@ -32,10 +37,7 @@ class User(AbstractUser):
 
     def get_predictor_authentication_data(self):
         """Returns the authentication data for the user instance"""
-        return {
-            'username': self.predictor_username,
-            'password': self.predictor_password
-        }
+        return {'username': self.predictor_username, 'password': self.predictor_password}
 
     def get_predictor_authorization_data(self):
         """Returns the authorization data for the user instance"""
@@ -61,6 +63,12 @@ class Subject(models.Model):
         # Default ordering of the records
         ordering = ['code']
 
+    # Define the configuration object
+    CONFIGURATION = SubjectDataConfiguration
+
+    # Define the cached data object
+    CACHED_DATA = SubjectCache
+
     # Define the sex options for each subject
     SEX = [('M', 'Male'), ('F', 'Female')]
 
@@ -79,7 +87,49 @@ class Subject(models.Model):
         return f'Subject: {self.code}'
 
     def get_lbd_probability_cache_key(self):
-        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.code}'
+        return self.CACHED_DATA(self).get_lbd_probability_cache_key()
+
+    @classmethod
+    def get_features_from_record(cls, record):
+        """Returns the features from the input record"""
+
+        # Handle no record situation
+        if not record:
+            return []
+
+        # Get the questionnaire question names
+        names = cls.CONFIGURATION.get_available_feature_names()
+
+        # Return the features
+        return [{
+            FeaturesFormatter.FEATURE_LABEL_FIELD: name,
+            FeaturesFormatter.FEATURE_VALUE_FIELD: getattr(record, name)
+            } for name in names
+        ]
+
+    def get_features_for_prediction(self):
+        """Gets the prediction features for a given subject"""
+
+        # Get the features for the referenced record
+        features = self.get_features_from_record(self)
+        features = FeaturesFormatter.get_features_as_kwargs(features)
+
+        # Accumulate the features and labels
+        feature_values = []
+        feature_labels = []
+
+        for supported_feature in self.CONFIGURATION.get_predictor_feature_names():
+            if supported_feature in features:
+
+                # Preprocess the feature
+                label, value = preprocess_feature(features[supported_feature], supported_feature, model=self)
+
+                # Accumulate the feature
+                feature_values += value
+                feature_labels += label
+
+        # Return the labels and features for prediction
+        return feature_labels, numpy.array(feature_values, dtype=numpy.float)
 
     @staticmethod
     def get_subjects(organization, order_by=()):
@@ -149,8 +199,11 @@ class ExaminationSession(models.Model):
         ordering = ['session_number']
 
     # Define the predictor data sequence (sequence of models to ge the features from)
-    PREDICTOR_DATA_SEQUENCE = getattr(settings, 'PREDICTOR_CONFIGURATION')['data_sequence']
+    PREDICTOR_DATA_SEQUENCE = getattr(settings, 'PREDICTOR_CONFIGURATION')['session_data_sequence']
     EXAMINATION_DATA_SEQUENCE = getattr(settings, 'DATA_CONFIGURATION')['data_sequence']
+
+    # Define the cached data object
+    CACHED_DATA = ExaminationSessionCache
 
     # Define the model schema
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
@@ -163,10 +216,50 @@ class ExaminationSession(models.Model):
         return f'{self.session_number}. session for subject: {self.subject.code}'
 
     def get_lbd_probability_cache_key(self):
-        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.subject.code}_session_{self.id}'
+        return self.CACHED_DATA(self).get_lbd_probability_cache_key()
 
-    def get_lbd_probability_cache_key_for_subject(self):
-        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.subject.code}'
+    def get_features_for_prediction(self):
+        """Gets the prediction features for a given examination session"""
+
+        # Prepare the features and labels buffer buffer
+        feature_labels = []
+        feature_values = []
+
+        # Get the features for all data types specified in the predictor configuration
+        for label in self.PREDICTOR_DATA_SEQUENCE:
+
+            # Get the model class from the data to model class mapping
+            model = DATA_TO_MODEL_CLASS_MAPPING[label]
+
+            # Get the model record (skip if there is not record yet)
+            record = model.get_data(examination_session=self)
+            if not record:
+                continue
+
+            # Get the features for the referenced record
+            features = model.get_features_from_record(record)
+            features = FeaturesFormatter.get_features_as_kwargs(features)
+
+            # Accumulate the features and labels
+            values = []
+            labels = []
+
+            for supported_feature in model.CONFIGURATION.get_predictor_feature_names():
+                if supported_feature in features:
+
+                    # Preprocess the feature
+                    label, value = preprocess_feature(features[supported_feature], supported_feature, model=model)
+
+                    # Accumulate the feature
+                    values += value
+                    labels += label
+
+            # Add the specific features and labels to the overall collection
+            feature_values += values
+            feature_labels += labels
+
+        # Return the labels and features for prediction
+        return feature_labels, numpy.array(feature_values, dtype=numpy.float)
 
     @staticmethod
     def get_sessions(subject, order_by=()):
@@ -218,47 +311,6 @@ class ExaminationSession(models.Model):
                     session = ExaminationSession.get_session(subject=subject, session_number=session_number)
                     return session
 
-    def get_features_for_prediction(self):
-        """Gets the prediction features for a given examination session"""
-
-        # Prepare the features and labels buffer buffer
-        feature_labels = []
-        feature_values = []
-
-        # Get the features for all data types specified in the predictor configuration
-        for label in self.PREDICTOR_DATA_SEQUENCE:
-
-            # Get the model class from the data to model class mapping
-            model = DATA_TO_MODEL_CLASS_MAPPING[label]
-
-            # Get the model record (skip if there is not record yet)
-            record = model.get_data(examination_session=self)
-            if not record:
-                continue
-
-            # Get the features for the referenced record
-            features = model.get_features_from_record(record)
-            features = model.get_features_as_kwargs(features)
-
-            # Accumulate the features and labels
-            values = []
-            labels = []
-
-            for supported_feature in model.CONFIGURATION.get_predictor_feature_names():
-                if supported_feature in features:
-                    values.append(features[supported_feature])
-                    labels.append(supported_feature)
-                else:
-                    values.append(None)
-                    labels.append(None)
-
-            # Add the specific features and labels to the overall collection
-            feature_values += values
-            feature_labels += labels
-
-        # Return the labels and features for prediction
-        return feature_labels, numpy.array(feature_values, dtype=numpy.float)
-
 
 class CommonExaminationSessionData(models.Model):
     """Base class for examination session data (structured and unstructured)"""
@@ -267,38 +319,12 @@ class CommonExaminationSessionData(models.Model):
         """Meta class definition"""
         abstract = True
 
-    # Define the configuration instance
+    # Define the configuration object
     CONFIGURATION = None
-
-    # Define the feature label/value field names
-    FEATURE_LABEL_FIELD = 'label'
-    FEATURE_TITLE_FIELD = 'title'
-    FEATURE_VALUE_FIELD = 'value'
-
-    # Define the unfilled feature label/title/value representation and real value
-    UNFILLED_FEATURE_LABEL_REPR = ''
-    UNFILLED_FEATURE_LABEL_REAL = None
-    UNFILLED_FEATURE_TITLE_REPR = 'title'
-    UNFILLED_FEATURE_TITLE_REAL = None
-    UNFILLED_FEATURE_VALUE_REPR = ''
-    UNFILLED_FEATURE_VALUE_REAL = None
 
     # Define the model schema
     examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE, primary_key=True)
     description = models.CharField('description', max_length=255, null=True, blank=True)
-
-    def get_lbd_probability_cache_key_for_subject(self):
-        return f'{CACHE_LBD_PROBABILITY_PREFIX}_subject_{self.examination_session.subject.code}'
-
-    def get_lbd_probability_cache_key_for_session(self):
-        return f'{CACHE_LBD_PROBABILITY_PREFIX}_' \
-               f'subject_{self.examination_session.subject.code}_' \
-               f'session_{self.examination_session.id}'
-
-    @classmethod
-    def get_sanitized_feature_value(cls, feature):
-        """Sanitizes the feature value (replaces NaN with None)"""
-        return None if (isinstance(feature, str) and not feature) or (pandas.isna(feature)) else feature
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
@@ -311,145 +337,6 @@ class CommonExaminationSessionData(models.Model):
         :rtype: list of dicts
         """
         return []
-
-    @classmethod
-    def get_features_as_kwargs(cls, features):
-        """Returns the features as kwargs (dict to be unfolded)"""
-        return {
-            feature[cls.FEATURE_LABEL_FIELD]: cls.get_sanitized_feature_value(feature[cls.FEATURE_VALUE_FIELD])
-            for feature in features
-        }
-
-    @classmethod
-    def get_configured_feature_names(cls):
-        """Returns the configured feature names"""
-        return cls.CONFIGURATION.feature_names()
-
-    @classmethod
-    def get_provided_feature_names(cls, features):
-        """Returns the provided feature names"""
-        return [feature[cls.FEATURE_LABEL_FIELD] for feature in features]
-
-    @classmethod
-    def _adjust_feature_label_for_presentation(cls, label=None):
-        """Adjusts the feature label for presentation"""
-        return label
-
-    @classmethod
-    def _adjust_feature_title_for_presentation(cls, title):
-        """Adjusts the feature title for presentation"""
-        if not title or title == cls.UNFILLED_FEATURE_TITLE_REAL:
-            return cls.UNFILLED_FEATURE_TITLE_REPR
-        else:
-            return title
-
-    @classmethod
-    def _adjust_feature_value_for_presentation(cls, value):
-        """Adjusts the feature value for presentation"""
-        if not value or value == cls.UNFILLED_FEATURE_VALUE_REAL:
-            return cls.UNFILLED_FEATURE_VALUE_REPR
-        else:
-            return value
-
-    @classmethod
-    def _adjust_feature_label_for_computation(cls, label):
-        """Adjusts the feature label for computation"""
-        return label
-
-    @classmethod
-    def _adjust_feature_value_for_computation(cls, value):
-        """Adjusts the feature value for computation"""
-        if isinstance(value, str) and value in cls.UNFILLED_FEATURE_VALUE_REPR:
-            return cls.UNFILLED_FEATURE_VALUE_REAL
-        else:
-            return value
-
-    @classmethod
-    def prepare_presentable(cls, record=None, features=None, **kwargs):
-        """
-        Prepares the features to be presentable.
-
-        :param record: record
-        :type record: Record, optional
-        :param features: features
-        :type features: list of dicts, optional
-        :return: features in a presentable form
-        :rtype: list of dicts
-        """
-
-        # Validate the input arguments
-        if not any((record, features)):
-            raise ValueError(f'Not enough information: record or features must be provided')
-
-        # Get the features
-        features = cls.get_features_from_record(record, **kwargs) if not features else features
-
-        # Return the presentable features
-        return [{
-            cls.FEATURE_LABEL_FIELD: cls._adjust_feature_label_for_presentation(feature.get(cls.FEATURE_LABEL_FIELD)),
-            cls.FEATURE_TITLE_FIELD: cls._adjust_feature_title_for_presentation(feature.get(cls.FEATURE_TITLE_FIELD)),
-            cls.FEATURE_VALUE_FIELD: cls._adjust_feature_value_for_presentation(feature.get(cls.FEATURE_VALUE_FIELD))
-            } for feature in features
-        ]
-
-    @classmethod
-    def prepare_computable(cls, record=None, features=None):
-        """
-        Prepares the features to be computable.
-
-        :param record: record
-        :type record: Record, optional
-        :param features: features
-        :type features: list of dicts, optional
-        :return: features in a computable form
-        :rtype: list of dicts
-        """
-
-        # Validate the input arguments
-        if not any((record, features)):
-            raise ValueError(f'Not enough information: record or features must be provided')
-
-        # Get the features
-        features = cls.get_features_from_record(record) if not features else features
-
-        # Return the computable features
-        return [{
-            cls.FEATURE_LABEL_FIELD: cls._adjust_feature_label_for_computation(feature[cls.FEATURE_LABEL_FIELD]),
-            cls.FEATURE_VALUE_FIELD: cls._adjust_feature_value_for_computation(feature[cls.FEATURE_VALUE_FIELD])
-            } for feature in features
-        ]
-
-    @classmethod
-    def prepare_downloadable(cls, response, record=None, features=None):
-        """
-        Prepares the features to be downloadable.
-
-        :param response: response to be filled with the features
-        :type response: HttpResponse
-        :param record: record
-        :type record: Record, optional
-        :param features: features
-        :type features: list of dicts, optional
-        :return: response with the inserted data
-        :rtype: HttpResponse
-        """
-
-        # Validate the input arguments
-        if not any((record, features)):
-            raise ValueError(f'Not enough information: record or features must be provided')
-
-        # Get the features
-        features = cls.get_features_from_record(record) if not features else features
-
-        # Prepare the CSV writer
-        writer = csv.writer(response)
-
-        # Write the header and the body
-        writer.writerow([element.get(cls.FEATURE_LABEL_FIELD) for element in features])
-        writer.writerow([element.get(cls.FEATURE_VALUE_FIELD) for element in features])
-
-        # Return the response
-        return response
 
     @classmethod
     def read_features_from_file(cls, file=None, path=None):
@@ -469,11 +356,11 @@ class CommonExaminationSessionData(models.Model):
             return []
 
         # Get the supported feature names
-        supported_features = cls.CONFIGURATION.get_feature_names()
+        supported_features = cls.CONFIGURATION.get_available_feature_names()
 
         # Return the features (filter only for the supported ones)
         return [
-            {cls.FEATURE_LABEL_FIELD: label, cls.FEATURE_VALUE_FIELD: value}
+            {FeaturesFormatter.FEATURE_LABEL_FIELD: label, FeaturesFormatter.FEATURE_VALUE_FIELD: value}
             for label, value in features
             if label in supported_features
         ]
@@ -544,15 +431,16 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         """Meta class definition"""
         abstract = True
 
-    # Define the maximum question name to be shown/used
-    MAX_QUESTION_LENGTH_PRESENTABLE = 100
-    MAX_QUESTION_LENGTH_COMPUTABLE = None
-
     @classmethod
-    def _adjust_question_length(cls, question):
-        if question and len(question) > cls.MAX_QUESTION_LENGTH_PRESENTABLE:
-            question = f'{question[:cls.MAX_QUESTION_LENGTH_PRESENTABLE]}...'
-        return question
+    def get_features_from_form(cls, form):
+        """Create the record from the input form"""
+
+        # Read the features from the file in the form
+        features = cls.read_features_from_file(file=form.cleaned_data['file'])
+        features = FeaturesFormatter(cls).prepare_computable(features=features)
+
+        # Return the features
+        return features
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
@@ -563,41 +451,30 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
             return []
 
         # Get the questionnaire question names
-        names = cls.CONFIGURATION.get_feature_names()
+        names = cls.CONFIGURATION.get_available_feature_names()
 
-        # Return the features (names as labels)
+        # Return the features (questions as labels)
         if kwargs.get('use_questions'):
 
             # Prepare the questions (long and adjusted version)
             questions = cls.CONFIGURATION.get_questions()
-            questions = [(question, cls._adjust_question_length(question)) for question in questions]
+            questions = [(question, FeaturesFormatter.sanitize_feature_label(question)) for question in questions]
 
             # Return the features
             return [{
-                cls.FEATURE_LABEL_FIELD: question,
-                cls.FEATURE_TITLE_FIELD: question_adjusted,
-                cls.FEATURE_VALUE_FIELD: getattr(record, name)}
-                for name, (question, question_adjusted) in zip(names, questions)
+                FeaturesFormatter.FEATURE_LABEL_FIELD: question,
+                FeaturesFormatter.FEATURE_TITLE_FIELD: question_adjusted,
+                FeaturesFormatter.FEATURE_VALUE_FIELD: getattr(record, name)
+                } for name, (question, question_adjusted) in zip(names, questions)
             ]
 
-        # Return the features (questions as labels)
+        # Return the features (names as labels)
         else:
             return [{
-                cls.FEATURE_LABEL_FIELD: name,
-                cls.FEATURE_VALUE_FIELD: getattr(record, name)}
-                for name in names
+                FeaturesFormatter.FEATURE_LABEL_FIELD: name,
+                FeaturesFormatter.FEATURE_VALUE_FIELD: getattr(record, name)
+                } for name in names
             ]
-
-    @classmethod
-    def get_features_from_form(cls, form):
-        """Create the record from the input form"""
-
-        # Read the features from the file in the form
-        features = cls.read_features_from_file(file=form.cleaned_data['file'])
-        features = cls.prepare_computable(features=features)
-
-        # Return the features
-        return features
 
     @classmethod
     def create_from_form(cls, form, **kwargs):
@@ -607,7 +484,7 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         features = cls.get_features_from_form(form)
 
         # Convert the features to kwargs and merge them with the input kwargs
-        record_data = {**cls.get_features_as_kwargs(features), **kwargs}
+        record_data = {**FeaturesFormatter.get_features_as_kwargs(features), **kwargs}
 
         # Create the record
         cls.objects.create(**record_data)
@@ -620,7 +497,7 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
         features = cls.get_features_from_form(form)
 
         # Convert the features to kwargs and merge them with the input kwargs
-        record_data = {**cls.get_features_as_kwargs(features), **kwargs}
+        record_data = {**FeaturesFormatter.get_features_as_kwargs(features), **kwargs}
 
         # Update the record
         for field, value in record_data.items():
@@ -636,8 +513,11 @@ class CommonQuestionnaireBasedData(CommonExaminationSessionData):
 class DataAcoustic(CommonFeatureBasedData):
     """Class implementing acoustic data model"""
 
-    # Define the configuration instance
-    CONFIGURATION = DataAcousticConfiguration()
+    # Define the configuration object
+    CONFIGURATION = DataAcousticConfiguration
+
+    # Define the features description
+    FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
 
     def __str__(self):
         subject = self.examination_session.subject.code
@@ -648,21 +528,41 @@ class DataAcoustic(CommonFeatureBasedData):
 class DataQuestionnaire(CommonQuestionnaireBasedData):
     """Class implementing questionnaire data model"""
 
-    # Define the configuration instance
-    CONFIGURATION = DataQuestionnaireConfiguration()
+    # Define the configuration object
+    CONFIGURATION = DataQuestionnaireConfiguration
 
-    # Define the questions
-    QUESTIONS = CONFIGURATION.get_questions()
+    # Define the questionnaire
+    QUESTIONNAIRE = CONFIGURATION.get_questionnaire()
 
-    # Define the options
-    OPTIONS = CONFIGURATION.get_options()
+    # Define the features description
+    FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
 
     # Define the model schema
-    q1 = models.PositiveSmallIntegerField(QUESTIONS[0], choices=OPTIONS[0], blank=True, null=True)
-    q2 = models.PositiveSmallIntegerField(QUESTIONS[1], choices=OPTIONS[1], blank=True, null=True)
-    q3 = models.PositiveSmallIntegerField(QUESTIONS[2], choices=OPTIONS[2], blank=True, null=True)
-    q4 = models.PositiveSmallIntegerField(QUESTIONS[3], choices=OPTIONS[3], blank=True, null=True)
-    q5 = models.PositiveSmallIntegerField(QUESTIONS[4], choices=OPTIONS[4], blank=True, null=True)
+    q1 = models.CharField(
+        QUESTIONNAIRE[0]['question'],
+        max_length=125,
+        choices=QUESTIONNAIRE[0]['options'],
+        blank=True,
+        null=True)
+    q2 = models.CharField(
+        QUESTIONNAIRE[1]['question'],
+        max_length=125,
+        choices=QUESTIONNAIRE[1]['options'],
+        blank=True,
+        null=True)
+    q3 = models.CharField(
+        QUESTIONNAIRE[2]['question'],
+        max_length=125,
+        choices=QUESTIONNAIRE[2]['options'],
+        blank=True,
+        null=True)
+    q4 = models.CharField(
+        QUESTIONNAIRE[3]['question'],
+        max_length=125,
+        choices=QUESTIONNAIRE[3]['options'],
+        blank=True,
+        null=True)
+    q5 = models.SmallIntegerField(QUESTIONNAIRE[4]['question'], blank=True, null=True)
 
     def __str__(self):
         subject = self.examination_session.subject.code

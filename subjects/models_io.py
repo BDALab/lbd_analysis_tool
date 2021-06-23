@@ -1,12 +1,44 @@
 import io
 import csv
 import openpyxl
-import pandas as pd
+import pandas
+from django.http import HttpResponse
+from .models_formatters import FeaturesFormatter
 
 
 # Define the file extensions
 CSV_EXTENSIONS = ('.csv', )
 XLS_EXTENSIONS = ('.xls', '.xlsx')
+
+
+def export_data(request, code, session_number, model):
+    """
+    Exports the data in a CSV file that is downloaded in a browser.
+
+    :param request: HTTP request
+    :type request: Request
+    :param code: code of the subject
+    :type code: str
+    :param session_number: session number
+    :type session_number: str
+    :param model: model to be used to get the data to be exported
+    :type model: Model
+    :return: HTTP response for the data to be exported
+    :rtype: HttpResponse
+    """
+
+    # Prepare the HTTP response and the fetched data to be exported
+    response = HttpResponse(content_type='text/csv')
+    fetched = model.get_data(subject_code=code, session_number=session_number)
+
+    # Prepare the fetched data to be downloadable
+    response = FeaturesFormatter(model).prepare_downloadable(record=fetched, response=response)
+
+    # Set the content disposition (to be downloaded by a browser)
+    response['Content-Disposition'] = 'attachment; filename="exported.csv"'
+
+    # Return the HTTP response
+    return response
 
 
 def is_csv_file(file=None, path=None):
@@ -84,7 +116,7 @@ def read_subjects_from_csv(file=None, path=None):
 
     # Read the subjects
     with open_csv_file(file=file, path=path) as file:
-        return pd.read_csv(file)
+        return pandas.read_csv(file)
 
 
 def read_subjects_from_excel(file=None, path=None):
@@ -96,7 +128,7 @@ def read_subjects_from_excel(file=None, path=None):
 
     # Read the subjects
     with open_excel_file(file=file, path=path) as file:
-        return pd.read_excel(file)
+        return pandas.read_excel(file)
 
 
 def get_file_name(file, path):

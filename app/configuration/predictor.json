@@ -1,9 +1,40 @@
 {
-  "data_sequence": [
+  "model_identifier": "dummy_predictor",
+  "address": "http://127.0.0.1:5000",
+  "timeout": 2,
+  "session_data_sequence": [
     "questionnaire",
     "acoustic"
   ],
-  "model_identifier": "dummy_predictor",
-  "address": "http://127.0.0.1:5000",
-  "timeout": 2
+  "data": {
+    "subject": {
+      "features": [
+        "age",
+        "sex"
+      ]
+    },
+    "session": {
+      "questionnaire": {
+        "features": [
+          "q1",
+          "q3",
+          "q5"
+        ]
+      },
+      "acoustic": {
+        "features": [
+          "feature_1",
+          "feature_2",
+          "feature_3",
+          "feature_4",
+          "feature_5",
+          "feature_6",
+          "feature_7",
+          "feature_8",
+          "feature_9",
+          "feature_10"
+        ]
+      }
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import uuid
 import secrets
-from predictor.client import register_predictor_user
+from predictor.auth import sign_up_predictor_user
 from django.core.cache import cache
 
 
@@ -28,8 +28,7 @@ def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
         instance.predictor_password = secrets.token_urlsafe(sender.PREDICTOR_PASSWORD_LENGTH)
 
         # Sign-up the user in the predictor API
-        if register_predictor_user(instance):
-            instance.predictor_registered = True
+        sign_up_predictor_user(user=instance)
 
         # Save the updated instance
         instance.save()
@@ -52,8 +51,8 @@ def invalidate_cached_lbd_prediction_for_session(sender, instance, created, **kw
     """
 
     # Get the keys to be invalidated (specific session and subject)
-    session_key = f'{instance.get_lbd_probability_cache_key_for_session()}'
-    subject_key = f'{instance.get_lbd_probability_cache_key_for_subject()}'
+    session_key = f'{instance.examination_session.get_lbd_probability_cache_key()}'
+    subject_key = f'{instance.examination_session.subject.get_lbd_probability_cache_key()}'
 
     # Join the obtained keys
     keys = [session_key] + [subject_key]
