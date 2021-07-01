@@ -1,4 +1,8 @@
 import numpy
+import random
+import string
+import uuid
+import secrets
 from django.db import models
 from django.db.models.signals import post_save
 from django.conf import settings
@@ -25,23 +29,44 @@ from .models_io import (
 class User(AbstractUser):
     """Class implementing user model"""
 
+    # Define the predictor ID generator
+    PREDICTOR_ID_GENERATOR = uuid.uuid4
+
     # Define the predictor API attributes
-    PREDICTOR_PASSWORD_LENGTH = 20
+    PREDICTOR_PASSWORD_LENGTH = 29
 
     # Define the model schema
     organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
     predictor_username = models.CharField('predictor username', max_length=50, null=True, blank=True)
     predictor_password = models.CharField('predictor password', max_length=50, null=True, blank=True)
     predictor_registered = models.BooleanField('predictor registered', default=False)
-    predictor_authorization_token = models.CharField('predictor token', max_length=300, null=True, blank=True)
+    predictor_access_token = models.CharField('predictor access token', max_length=300, null=True, blank=True)
+    predictor_refresh_token = models.CharField('predictor refresh token', max_length=300, null=True, blank=True)
 
-    def get_predictor_authentication_data(self):
-        """Returns the authentication data for the user instance"""
+    def get_predictor_authentication_credentials(self):
+        """Returns the authentication credentials for the user instance"""
         return {'username': self.predictor_username, 'password': self.predictor_password}
 
-    def get_predictor_authorization_data(self):
-        """Returns the authorization data for the user instance"""
-        return {'Authorization': f'Bearer {self.predictor_authorization_token}'}
+    def get_predictor_access_token(self):
+        """Returns the access token for the user instance"""
+        return {'Authorization': f'Bearer {self.predictor_access_token}'}
+
+    def get_predictor_refresh_token(self):
+        """Returns the access token for the user instance"""
+        return {'Authorization': f'Bearer {self.predictor_refresh_token}'}
+
+    @classmethod
+    def generate_predictor_username(cls):
+        """Generates the predictor username"""
+        return str(cls.PREDICTOR_ID_GENERATOR())
+
+    @classmethod
+    def generate_predictor_password(cls):
+        """Generates the predictor username"""
+        return secrets.token_urlsafe(cls.PREDICTOR_PASSWORD_LENGTH) + \
+            ''.join(random.SystemRandom().choice(string.ascii_uppercase) for _ in range(1)) + \
+            ''.join(random.SystemRandom().choice(string.ascii_lowercase) for _ in range(1)) + \
+            ''.join(random.SystemRandom().choice(string.digits) for _ in range(1))
 
 
 class Organization(models.Model):

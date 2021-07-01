@@ -1,6 +1,6 @@
 import requests
 from predictor.client import PredictorApiClient
-from predictor.auth import sign_up_predictor_user, log_in_predictor_user
+from predictor.auth import sign_up_predictor_user, log_in_predictor_user, refresh_access_token
 
 
 def predict_lbd_probability(user, data, model):
@@ -25,6 +25,11 @@ def predict_lbd_probability(user, data, model):
         if not sign_up_predictor_user(predictor=predictor):
             return None
 
+    # Check if the use is logged-in already (log-in if needed)
+    if not user.predictor_access_token:
+        if not log_in_predictor_user(predictor=predictor):
+            return None
+
     # Validate if there are data to be used for the prediction
     labels, values = data
     if values.size == 0:
@@ -35,12 +40,11 @@ def predict_lbd_probability(user, data, model):
         # Predict the LBD probability via the predictor API using the provided data and model identifier
         response = predictor.predict(data=data, model=model)
 
-        # Handle the authorization token errors
+        # Handle the authorization token expiration
         if not response.ok:
             if response.status_code in predictor.log_in_required_errors:
-                user.predictor_authorization_token = log_in_predictor_user(predictor=predictor)
-                user.save()
-                response = predictor.predict(data=data, model=model)
+                if refresh_access_token(predictor=predictor):
+                    response = predictor.predict(data=data, model=model)
 
         if not response.ok:
             return None

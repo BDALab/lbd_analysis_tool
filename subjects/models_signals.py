@@ -1,5 +1,3 @@
-import uuid
-import secrets
 from predictor.auth import sign_up_predictor_user
 from django.core.cache import cache
 
@@ -24,8 +22,8 @@ def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
     if created:
 
         # Add username and password for predictor API after user is created
-        instance.predictor_username = str(uuid.uuid4())
-        instance.predictor_password = secrets.token_urlsafe(sender.PREDICTOR_PASSWORD_LENGTH)
+        instance.predictor_username = instance.generate_predictor_username()
+        instance.predictor_password = instance.generate_predictor_password()
 
         # Sign-up the user in the predictor API
         sign_up_predictor_user(user=instance)

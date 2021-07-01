@@ -18,11 +18,15 @@ class PredictorApiClient(object):
 
     def sign_up(self):
         """Signs-up a user in the predictor API"""
-        return requests.post(f'{self.address}/signup', json=self.user.get_predictor_authentication_data())
+        return requests.post(f'{self.address}/signup', json=self.user.get_predictor_authentication_credentials())
 
     def log_in(self):
         """Logs-in a user in the predictor API"""
-        return requests.post(f'{self.address}/login', json=self.user.get_predictor_authentication_data())
+        return requests.post(f'{self.address}/login', json=self.user.get_predictor_authentication_credentials())
+
+    def refresh_access_token(self):
+        """Refreshes an access token in the predictor API"""
+        return requests.post(f'{self.address}/refresh', json=self.user.get_predictor_refresh_token())
 
     def predict(self, data=None, model=None):
         """
@@ -50,7 +54,7 @@ class PredictorApiClient(object):
         }
 
         # Prepare the headers to be sent via the API
-        headers = self.user.get_predictor_authorization_data()
+        headers = self.user.get_predictor_access_token()
 
         # Run the predictor
         return requests.post(
