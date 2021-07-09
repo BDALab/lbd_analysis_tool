@@ -50,7 +50,7 @@ def predict_lbd_probability(user, data, model):
             return None
 
         # Extract the LBD probability
-        probability = response.json().get('proba')
+        probability = response.json().get('predicted').get('proba')
         probability = round(float(probability) * 100, 2) if probability is not None else None
 
     except requests.ConnectionError:

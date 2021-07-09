@@ -26,7 +26,7 @@ class PredictorApiClient(object):
 
     def refresh_access_token(self):
         """Refreshes an access token in the predictor API"""
-        return requests.post(f'{self.address}/refresh', json=self.user.get_predictor_refresh_token())
+        return requests.post(f'{self.address}/refresh', headers=self.user.get_predictor_refresh_token())
 
     def predict(self, data=None, model=None):
         """
@@ -47,9 +47,8 @@ class PredictorApiClient(object):
         data = {
             'model': model,
             'features': {
-                'data': self.wrap_data(feature_values),
+                'values': self.wrap_data(feature_values),
                 'labels': feature_labels,
-                'shapes': feature_values.shape
             }
         }
 
