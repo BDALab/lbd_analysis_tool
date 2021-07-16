@@ -38,20 +38,20 @@ def predict_lbd_probability(user, data, model):
     try:
 
         # Predict the LBD probability via the predictor API using the provided data and model identifier
-        response = predictor.predict(data=data, model=model)
+        response = predictor.predict_proba(data=data, model=model)
 
         # Handle the authorization token expiration
         if not response.ok:
             if response.status_code in predictor.log_in_required_errors:
                 if refresh_access_token(predictor=predictor):
-                    response = predictor.predict(data=data, model=model)
+                    response = predictor.predict_proba(data=data, model=model)
 
         if not response.ok:
             return None
 
         # Extract the LBD probability
-        probability = response.json().get('predicted').get('proba')
-        probability = round(float(probability) * 100, 2) if probability is not None else None
+        probability = predictor.unwrap_data(response.json().get('predicted'))
+        probability = round(float(probability[0, 1]) * 100, 2) if probability is not None else None
 
     except requests.ConnectionError:
         probability = None

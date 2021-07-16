@@ -28,17 +28,8 @@ class PredictorApiClient(object):
         """Refreshes an access token in the predictor API"""
         return requests.post(f'{self.address}/refresh', headers=self.user.get_predictor_refresh_token())
 
-    def predict(self, data=None, model=None):
-        """
-        Predicts the LBD probability via the predictor API.
-
-        :param data: data to be used for the prediction
-        :type data: data supported by the API
-        :param model: model identifier to be used
-        :type model: str
-        :return: API response
-        :rtype: Response
-        """
+    def prepare_request_data(self, data, model):
+        """Prepares the request data"""
 
         # Get feature labels and values
         feature_labels, feature_values = data
@@ -52,12 +43,60 @@ class PredictorApiClient(object):
             }
         }
 
-        # Prepare the headers to be sent via the API
-        headers = self.user.get_predictor_access_token()
+        # Return the data
+        return data
+
+    def prepare_request_headers(self):
+        """Prepares the request data"""
+        return self.user.get_predictor_access_token()
+
+    def predict(self, data=None, model=None):
+        """
+        Predicts the LBD class via the predictor API.
+
+        :param data: data to be used for the prediction
+        :type data: data supported by the API
+        :param model: model identifier to be used
+        :type model: str
+        :return: API response
+        :rtype: Response
+        """
+
+        # Prepare the request data
+        data = self.prepare_request_data(data, model)
+
+        # Prepare the request headers
+        headers = self.prepare_request_headers()
 
         # Run the predictor
         return requests.post(
             url=f'{self.address}/predict',
+            json=data,
+            headers=headers,
+            verify=True,
+            timeout=self.timeout)
+
+    def predict_proba(self, data=None, model=None):
+        """
+        Predicts the LBD probability via the predictor API.
+
+        :param data: data to be used for the prediction
+        :type data: data supported by the API
+        :param model: model identifier to be used
+        :type model: str
+        :return: API response
+        :rtype: Response
+        """
+
+        # Prepare the request data
+        data = self.prepare_request_data(data, model)
+
+        # Prepare the request headers
+        headers = self.prepare_request_headers()
+
+        # Run the predictor
+        return requests.post(
+            url=f'{self.address}/predict_proba',
             json=data,
             headers=headers,
             verify=True,
