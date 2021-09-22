@@ -52,7 +52,7 @@ class User(AbstractUser):
         return {'Authorization': f'Bearer {self.predictor_access_token}'}
 
     def get_predictor_refresh_token(self):
-        """Returns the access token for the user instance"""
+        """Returns the refresh token for the user instance"""
         return {'Authorization': f'Bearer {self.predictor_refresh_token}'}
 
     @classmethod
