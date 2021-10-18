@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import reverse, redirect
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.views import generic
 from django.urls import reverse_lazy
@@ -108,7 +108,7 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
         return context
 
 
-class SubjectCohortImportView(LoginRequiredMixin, generic.FormView):
+class SubjectCohortImportView(LoginRequiredMixin, UserPassesTestMixin, generic.FormView):
     """Class implementing subject cohort import"""
 
     # Define the template name
@@ -116,6 +116,10 @@ class SubjectCohortImportView(LoginRequiredMixin, generic.FormView):
 
     # Define the form class
     form_class = UploadFileForm
+
+    def test_func(self):
+        """Test function to determine if a user can use the view"""
+        return self.request.user.power_user
 
     def form_valid(self, form):
         """Form valid hook: imports the subjects"""

@@ -42,6 +42,7 @@ class User(AbstractUser):
     predictor_registered = models.BooleanField('predictor registered', default=False)
     predictor_access_token = models.CharField('predictor access token', max_length=300, null=True, blank=True)
     predictor_refresh_token = models.CharField('predictor refresh token', max_length=300, null=True, blank=True)
+    power_user = models.BooleanField('poweruser status', default=False)
 
     def get_predictor_authentication_credentials(self):
         """Returns the authentication credentials for the user instance"""
