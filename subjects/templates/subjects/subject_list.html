@@ -21,10 +21,14 @@
                                    href="{% url 'subjects:subject_create' %}">
                                     Create subject
                                 </a>
-                                <a class="flex items-center text-center text-white bg-indigo-500 border-0 ml-1 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
-                                   href="{% url 'subjects:subject_import_cohort' %}">
-                                    Import subjects
-                                </a>
+
+                                <!-- Import subjects -->
+                                {% if is_poweruser %}
+                                    <a class="flex items-center text-center text-white bg-indigo-500 border-0 ml-1 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded"
+                                       href="{% url 'subjects:subject_import_cohort' %}">
+                                        Import subjects
+                                    </a>
+                                {% endif %}
 
                                 <!-- Subjects information -->
                                 <div class="flex ml-3 mt-2">

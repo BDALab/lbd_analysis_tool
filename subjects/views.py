@@ -96,6 +96,9 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
         # Get the context
         context = super(SubjectListView, self).get_context_data(**kwargs)
 
+        # Add the power user information to the context
+        context["is_poweruser"] = self.request.user.power_user
+
         # Add the examination session
         if self.request.GET.get('q'):
             context.update({'q': self.request.GET.get('q')})
