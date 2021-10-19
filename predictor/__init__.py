@@ -55,6 +55,8 @@ def predict_lbd_probability(user, data, model):
 
     except requests.ConnectionError:
         probability = None
+    except requests.exceptions.ChunkedEncodingError:
+        probability = None
 
     # Return the LBD probability
     return probability
