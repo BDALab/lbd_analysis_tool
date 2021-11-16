@@ -1,6 +1,8 @@
 {
   "model_identifier": "dummy_predictor",
-  "address": "http://127.0.0.1:5000",
+  "host": "http://127.0.0.1",
+  "port": "500",
+  "verify": true,
   "timeout": 2,
   "session_data_sequence": [
     "questionnaire",

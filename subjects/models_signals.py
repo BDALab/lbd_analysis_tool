@@ -1,4 +1,4 @@
-from predictor.auth import sign_up_predictor_user
+from predictor import sign_up_predictor_user
 from django.core.cache import cache
 
 
