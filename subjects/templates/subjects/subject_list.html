@@ -157,14 +157,14 @@
                                                         </div>
                                                         <div class="text-sm text-gray-500">
                                                             {% if subject.sex is not none %}
-                                                                {% if subject.age is not none %}
-                                                                    {{ subject.sex }} : {{ subject.age }}
+                                                                {% if subject.year_of_birth is not none %}
+                                                                    {{ subject.sex }} : {{ subject.year_of_birth }}
                                                                 {% else %}
                                                                     {{ subject.sex }}
                                                                 {% endif %}
                                                             {% else %}
-                                                                {% if subject.age is not none %}
-                                                                    {{ subject.age }}
+                                                                {% if subject.year_of_birth is not none %}
+                                                                    {{ subject.year_of_birth }}
                                                                 {% endif %}
                                                             {% endif %}
                                                         </div>
@@ -173,11 +173,11 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 <div class="text-sm text-gray-900">
-                                                    Acquired 2 examination sessions
+                                                    Acquired {{ subject.num_sessions }} examination session(s)
                                                 </div>
-                                                <div class="text-sm text-gray-500">
+                                                <!-- <div class="text-sm text-gray-500">
                                                     latest 2 day(s) ago
-                                                </div>
+                                                </div> -->
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 {% if not subject.lbd_probability %}

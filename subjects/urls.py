@@ -9,13 +9,23 @@ from .views import (
     SessionDetailView,
     SessionDataAcousticDetailView,
     SessionDataAcousticUpdateView,
-    SessionDataQuestionnaireDetailView,
-    SessionDataQuestionnaireCreateView,
-    SessionDataQuestionnaireUpdateView,
-    SessionDataQuestionnaireUploadView,
+    SessionDataActigraphyDetailView,
+    SessionDataActigraphyUpdateView,
+    SessionDataHandwritingDetailView,
+    SessionDataHandwritingUpdateView,
+    SessionDataPsychologyDetailView,
+    SessionDataPsychologyUpdateView,
+    SessionDataTCSDetailView,
+    SessionDataTCSUpdateView,
+    SessionDataCEIDetailView,
+    SessionDataCEIUpdateView,
     create_session,
     export_acoustic_data,
-    export_questionnaire_data
+    export_actigraphy_data,
+    export_handwriting_data,
+    export_psychology_data,
+    export_tcs_data,
+    export_cei_data
 )
 
 
@@ -49,20 +59,58 @@ urlpatterns = [
          SessionDataAcousticUpdateView.as_view(),
          name='session_update_data_acoustic'),
 
-    # 2. questionnaire data
-    path('<str:code>/session/<int:session_number>/data_questionnaire/import/',
-         SessionDataQuestionnaireUploadView.as_view(),
-         name='import_questionnaire_data'),
-    path('<str:code>/session/<int:session_number>/data_questionnaire/export',
-         export_questionnaire_data,
-         name='export_questionnaire_data'),
-    path('<str:code>/session/<int:session_number>/data_questionnaire/',
-         SessionDataQuestionnaireDetailView.as_view(),
-         name='session_detail_data_questionnaire'),
-    path('<str:code>/session/<int:session_number>/data_questionnaire/create/',
-         SessionDataQuestionnaireCreateView.as_view(),
-         name='session_create_data_questionnaire'),
-    path('<str:code>/session/<int:session_number>/data_questionnaire/update/',
-         SessionDataQuestionnaireUpdateView.as_view(),
-         name='session_update_data_questionnaire')
+    # 2. actigraphy data
+    path('<str:code>/session/<int:session_number>/data_actigraphy/export',
+         export_actigraphy_data,
+         name='export_actigraphy_data'),
+    path('<str:code>/session/<int:session_number>/data_actigraphy/',
+         SessionDataActigraphyDetailView.as_view(),
+         name='session_detail_data_actigraphy'),
+    path('<str:code>/session/<int:session_number>/data_actigraphy/upload/',
+         SessionDataActigraphyUpdateView.as_view(),
+         name='session_update_data_actigraphy'),
+
+    # 3. handwriting data
+    path('<str:code>/session/<int:session_number>/data_handwriting/export',
+         export_handwriting_data,
+         name='export_handwriting_data'),
+    path('<str:code>/session/<int:session_number>/data_handwriting/',
+         SessionDataHandwritingDetailView.as_view(),
+         name='session_detail_data_handwriting'),
+    path('<str:code>/session/<int:session_number>/data_handwriting/upload/',
+         SessionDataHandwritingUpdateView.as_view(),
+         name='session_update_data_handwriting'),
+
+    # 4. psychology data
+    path('<str:code>/session/<int:session_number>/data_psychology/export',
+         export_psychology_data,
+         name='export_psychology_data'),
+    path('<str:code>/session/<int:session_number>/data_psychology/',
+         SessionDataPsychologyDetailView.as_view(),
+         name='session_detail_data_psychology'),
+    path('<str:code>/session/<int:session_number>/data_psychology/upload/',
+         SessionDataPsychologyUpdateView.as_view(),
+         name='session_update_data_psychology'),
+
+    # 5. TCS data
+    path('<str:code>/session/<int:session_number>/data_tcs/export',
+         export_tcs_data,
+         name='export_tcs_data'),
+    path('<str:code>/session/<int:session_number>/data_tcs/',
+         SessionDataTCSDetailView.as_view(),
+         name='session_detail_data_tcs'),
+    path('<str:code>/session/<int:session_number>/data_tcs/upload/',
+         SessionDataTCSUpdateView.as_view(),
+         name='session_update_data_tcs'),
+
+    # 6. CEI data
+    path('<str:code>/session/<int:session_number>/data_cei/export',
+         export_cei_data,
+         name='export_cei_data'),
+    path('<str:code>/session/<int:session_number>/data_cei/',
+         SessionDataCEIDetailView.as_view(),
+         name='session_detail_data_cei'),
+    path('<str:code>/session/<int:session_number>/data_cei/upload/',
+         SessionDataCEIUpdateView.as_view(),
+         name='session_update_data_cei')
 ]

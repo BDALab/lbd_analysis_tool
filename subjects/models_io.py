@@ -1,7 +1,6 @@
 import io
 import csv
 import openpyxl
-import pandas
 from django.http import HttpResponse
 from .models_formatters import FeaturesFormatter
 
@@ -105,30 +104,6 @@ def read_features_from_excel(file=None, path=None):
 
     # Return the features and labels
     return zip(feature_labels, feature_values)
-
-
-def read_subjects_from_csv(file=None, path=None):
-    """Reads the subjects from a *.CSV file"""
-
-    # Validate the input arguments
-    if not any((file, path)):
-        raise ValueError(f'Not enough arguments to read from the *.csv file')
-
-    # Read the subjects
-    with open_csv_file(file=file, path=path) as file:
-        return pandas.read_csv(file)
-
-
-def read_subjects_from_excel(file=None, path=None):
-    """Reads the subjects from a *.XLSX/*.XLS file"""
-
-    # Validate the input arguments
-    if not any((file, path)):
-        raise ValueError(f'Not enough arguments to read from the *.xls/*.xlsx file')
-
-    # Read the subjects
-    with open_excel_file(file=file, path=path) as file:
-        return pandas.read_excel(file)
 
 
 def get_file_name(file, path):

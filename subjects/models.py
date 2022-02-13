@@ -10,9 +10,17 @@ from django.core.validators import FileExtensionValidator
 from django.contrib.auth.models import AbstractUser
 from django.shortcuts import get_object_or_404
 from predictor.preprocessors import preprocess_feature
-from .models_configuration import SubjectDataConfiguration, DataQuestionnaireConfiguration, DataAcousticConfiguration
 from .models_cache import SubjectCache, ExaminationSessionCache
-from .models_formatters import FeaturesFormatter
+from .models_formatters import FeaturesFormatter, format_feature_data_type
+from .models_configuration import (
+    SubjectDataConfiguration,
+    DataAcousticConfiguration,
+    DataActigraphyConfiguration,
+    DataHandwritingConfiguration,
+    DataPsychologyConfiguration,
+    DataTCSConfiguration,
+    DataCEIConfiguration
+)
 from .models_signals import (
     prepare_predictor_api_for_created_user,
     invalidate_cached_lbd_prediction_for_session,
@@ -42,7 +50,7 @@ class User(AbstractUser):
     predictor_registered = models.BooleanField('predictor registered', default=False)
     predictor_access_token = models.CharField('predictor access token', max_length=300, null=True, blank=True)
     predictor_refresh_token = models.CharField('predictor refresh token', max_length=300, null=True, blank=True)
-    power_user = models.BooleanField('poweruser status', default=False)
+    power_user = models.BooleanField('power user status', default=False)
 
     def get_predictor_authentication_credentials(self):
         """Returns the authentication credentials for the user instance"""
@@ -99,15 +107,13 @@ class Subject(models.Model):
     SEX = [('M', 'Male'), ('F', 'Female')]
 
     # Define the model schema
-    organization = models.ForeignKey('Organization', on_delete=models.SET_NULL, null=True, blank=True)
+    organization = models.ForeignKey('organization', on_delete=models.SET_NULL, null=True, blank=True)
     code = models.CharField('subject code', max_length=50, unique=True)
-    age = models.SmallIntegerField('age (years)', null=True, blank=True)
+    year_of_birth = models.SmallIntegerField('year of birth', null=True, blank=True)
     sex = models.CharField('sex', max_length=1, choices=SEX, null=True, blank=True)
-    nationality = models.CharField('nationality', max_length=50, null=True, blank=True)
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)
     lbd_probability = models.FloatField('lbd_probability', null=True, blank=True)
-    description = models.CharField('description', max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f'Subject: {self.code}'
@@ -234,7 +240,7 @@ class ExaminationSession(models.Model):
     # Define the model schema
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
     session_number = models.SmallIntegerField('session number')
-    description = models.CharField('description', max_length=255, null=True, blank=True)
+    internal_prefix = models.CharField('internal prefix', max_length=50, null=True, blank=True)
     created_on = models.DateField('created on', auto_now_add=True)
     updated_on = models.DateField('updated on', auto_now=True)
 
@@ -247,7 +253,7 @@ class ExaminationSession(models.Model):
     def get_features_for_prediction(self):
         """Gets the prediction features for a given examination session"""
 
-        # Prepare the features and labels buffer buffer
+        # Prepare the features and labels buffer
         feature_labels = []
         feature_values = []
 
@@ -257,7 +263,7 @@ class ExaminationSession(models.Model):
             # Get the model class from the data to model class mapping
             model = DATA_TO_MODEL_CLASS_MAPPING[label]
 
-            # Get the model record (skip if there is not record yet)
+            # Get the model record (skip if there is no record yet)
             record = model.get_data(examination_session=self)
             if not record:
                 continue
@@ -354,14 +360,7 @@ class CommonExaminationSessionData(models.Model):
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
-        """
-        Returns the features as a list of dicts from the input record.
-
-        :param record: feature-based data record
-        :type record: Record
-        :return: feature-based data (feature labels, feature values)
-        :rtype: list of dicts
-        """
+        """Returns the features as a list of dicts from the input record"""
         return []
 
     @classmethod
@@ -384,9 +383,15 @@ class CommonExaminationSessionData(models.Model):
         # Get the supported feature names
         supported_features = cls.CONFIGURATION.get_available_feature_names()
 
-        # Return the features (filter only for the supported ones)
+        # Return the features (filter only for the supported ones and handle the data types)
         return [
-            {FeaturesFormatter.FEATURE_LABEL_FIELD: label, FeaturesFormatter.FEATURE_VALUE_FIELD: value}
+            {
+                FeaturesFormatter.FEATURE_LABEL_FIELD: label,
+                FeaturesFormatter.FEATURE_VALUE_FIELD: format_feature_data_type(
+                    feature=value,
+                    configuration=cls.CONFIGURATION.database.get('features_description', {}).get(label)
+                )
+            }
             for label, value in features
             if label in supported_features
         ]
@@ -450,92 +455,6 @@ class CommonFeatureBasedData(CommonExaminationSessionData):
         return cls.read_features_from_file(path=record.data.path) if record else []
 
 
-class CommonQuestionnaireBasedData(CommonExaminationSessionData):
-    """Base class for questionnaire-based examination session data"""
-
-    class Meta:
-        """Meta class definition"""
-        abstract = True
-
-    @classmethod
-    def get_features_from_form(cls, form):
-        """Create the record from the input form"""
-
-        # Read the features from the file in the form
-        features = cls.read_features_from_file(file=form.cleaned_data['file'])
-        features = FeaturesFormatter(cls).prepare_computable(features=features)
-
-        # Return the features
-        return features
-
-    @classmethod
-    def get_features_from_record(cls, record, **kwargs):
-        """Returns the features from the input record"""
-
-        # Handle no record situation
-        if not record:
-            return []
-
-        # Get the questionnaire question names
-        names = cls.CONFIGURATION.get_available_feature_names()
-
-        # Return the features (questions as labels)
-        if kwargs.get('use_questions'):
-
-            # Prepare the questions (long and adjusted version)
-            questions = cls.CONFIGURATION.get_questions()
-            questions = [(question, FeaturesFormatter.sanitize_feature_label(question)) for question in questions]
-
-            # Return the features
-            return [{
-                FeaturesFormatter.FEATURE_LABEL_FIELD: question,
-                FeaturesFormatter.FEATURE_TITLE_FIELD: question_adjusted,
-                FeaturesFormatter.FEATURE_VALUE_FIELD: getattr(record, name)
-                } for name, (question, question_adjusted) in zip(names, questions)
-            ]
-
-        # Return the features (names as labels)
-        else:
-            return [{
-                FeaturesFormatter.FEATURE_LABEL_FIELD: name,
-                FeaturesFormatter.FEATURE_VALUE_FIELD: getattr(record, name)
-                } for name in names
-            ]
-
-    @classmethod
-    def create_from_form(cls, form, **kwargs):
-        """Create the record from the input form"""
-
-        # Read the features from the file in the form
-        features = cls.get_features_from_form(form)
-
-        # Convert the features to kwargs and merge them with the input kwargs
-        record_data = {**FeaturesFormatter.get_features_as_kwargs(features), **kwargs}
-
-        # Create the record
-        cls.objects.create(**record_data)
-
-    @classmethod
-    def update_from_form(cls, form, record, **kwargs):
-        """Updates the record from the input form"""
-
-        # Read the features from the file in the form
-        features = cls.get_features_from_form(form)
-
-        # Convert the features to kwargs and merge them with the input kwargs
-        record_data = {**FeaturesFormatter.get_features_as_kwargs(features), **kwargs}
-
-        # Update the record
-        for field, value in record_data.items():
-            setattr(record, field, value)
-
-        # Save the record
-        record.save()
-
-        # Return the updated record
-        return record
-
-
 class DataAcoustic(CommonFeatureBasedData):
     """Class implementing acoustic data model"""
 
@@ -551,60 +470,98 @@ class DataAcoustic(CommonFeatureBasedData):
         return f'Acoustic data for subject: {subject} ({session}. session)'
 
 
-class DataQuestionnaire(CommonQuestionnaireBasedData):
-    """Class implementing questionnaire data model"""
+class DataActigraphy(CommonFeatureBasedData):
+    """Class implementing actigraphy data model"""
 
     # Define the configuration object
-    CONFIGURATION = DataQuestionnaireConfiguration
-
-    # Define the questionnaire
-    QUESTIONNAIRE = CONFIGURATION.get_questionnaire()
+    CONFIGURATION = DataActigraphyConfiguration
 
     # Define the features description
     FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
 
-    # Define the model schema
-    q1 = models.CharField(
-        QUESTIONNAIRE[0]['question'],
-        max_length=125,
-        choices=QUESTIONNAIRE[0]['options'],
-        blank=True,
-        null=True)
-    q2 = models.CharField(
-        QUESTIONNAIRE[1]['question'],
-        max_length=125,
-        choices=QUESTIONNAIRE[1]['options'],
-        blank=True,
-        null=True)
-    q3 = models.CharField(
-        QUESTIONNAIRE[2]['question'],
-        max_length=125,
-        choices=QUESTIONNAIRE[2]['options'],
-        blank=True,
-        null=True)
-    q4 = models.CharField(
-        QUESTIONNAIRE[3]['question'],
-        max_length=125,
-        choices=QUESTIONNAIRE[3]['options'],
-        blank=True,
-        null=True)
-    q5 = models.SmallIntegerField(QUESTIONNAIRE[4]['question'], blank=True, null=True)
+    def __str__(self):
+        subject = self.examination_session.subject.code
+        session = self.examination_session.session_number
+        return f'Actigraphy data for subject: {subject} ({session}. session)'
+
+
+class DataHandwriting(CommonFeatureBasedData):
+    """Class implementing handwriting data model"""
+
+    # Define the configuration object
+    CONFIGURATION = DataHandwritingConfiguration
+
+    # Define the features description
+    FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
 
     def __str__(self):
         subject = self.examination_session.subject.code
         session = self.examination_session.session_number
-        return f'Questionnaire data for subject: {subject} ({session}. session)'
+        return f'Handwriting data for subject: {subject} ({session}. session)'
+
+
+class DataPsychology(CommonFeatureBasedData):
+    """Class implementing psychology data model"""
+
+    # Define the configuration object
+    CONFIGURATION = DataPsychologyConfiguration
+
+    # Define the features description
+    FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
+
+    def __str__(self):
+        subject = self.examination_session.subject.code
+        session = self.examination_session.session_number
+        return f'Psychology data for subject: {subject} ({session}. session)'
+
+
+class DataTCS(CommonFeatureBasedData):
+    """Class implementing TCS data model"""
+
+    # Define the configuration object
+    CONFIGURATION = DataTCSConfiguration
+
+    # Define the features description
+    FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
+
+    def __str__(self):
+        subject = self.examination_session.subject.code
+        session = self.examination_session.session_number
+        return f'TCS data for subject: {subject} ({session}. session)'
+
+
+class DataCEI(CommonFeatureBasedData):
+    """Class implementing CEI data model"""
+
+    # Define the configuration object
+    CONFIGURATION = DataCEIConfiguration
+
+    # Define the features description
+    FEATURES_DESCRIPTION = CONFIGURATION.get_features_description()
+
+    def __str__(self):
+        subject = self.examination_session.subject.code
+        session = self.examination_session.session_number
+        return f'CEI data for subject: {subject} ({session}. session)'
 
 
 # Connect the signals
 post_save.connect(prepare_predictor_api_for_created_user, sender=User)
 post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataAcoustic)
-post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataQuestionnaire)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataActigraphy)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataHandwriting)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataPsychology)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataTCS)
+post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataCEI)
 post_save.connect(invalidate_cached_lbd_prediction_for_subject, sender=Subject)
 
 
 # Define the data to the model class mapping
 DATA_TO_MODEL_CLASS_MAPPING = {
-    'questionnaire': DataQuestionnaire,
-    'acoustic': DataAcoustic
+    'acoustic': DataAcoustic,
+    'actigraphy': DataActigraphy,
+    'handwriting': DataHandwriting,
+    'psychology': DataPsychology,
+    'tcs': DataTCS,
+    'cei': DataCEI
 }

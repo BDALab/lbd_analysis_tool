@@ -7,12 +7,31 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.views import generic
 from django.urls import reverse_lazy
-from .forms import SubjectModelForm, CustomUserCreationForm, DataAcousticForm, DataQuestionnaireForm, UploadFileForm
-from .models import Subject, ExaminationSession, DataAcoustic, DataQuestionnaire
-from .models_io import export_data
-from .models_formatters import FeaturesFormatter
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
+from .models_io import export_data
+from .models_formatters import FeaturesFormatter
+from .models import (
+    Subject,
+    ExaminationSession,
+    DataAcoustic,
+    DataActigraphy,
+    DataHandwriting,
+    DataPsychology,
+    DataTCS,
+    DataCEI
+)
+from .forms import (
+    SubjectModelForm,
+    CustomUserCreationForm,
+    DataAcousticForm,
+    DataActigraphyForm,
+    DataHandwritingForm,
+    DataPsychologyForm,
+    DataTCSForm,
+    DataCEIForm,
+    UploadFileForm
+)
 
 
 # Get the module-level logger instance
@@ -96,9 +115,13 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
         # Get the context
         context = super(SubjectListView, self).get_context_data(**kwargs)
 
-        # Add the examination session
+        # Add the filter
         if self.request.GET.get('q'):
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the session information
+        for subject in context.get(self.context_object_name):
+            subject.num_sessions = ExaminationSession.get_sessions(subject=subject).count()
 
         # Get the LBD probability for each subject in the list
         for subject in context.get(self.context_object_name):
@@ -306,13 +329,17 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
     # Define the context object name
     context_object_name = 'session'
 
-    # Define the examination session parts (examinations/questionnaires, etc.)
+    # Define the examination session parts
     # 1. examination name
     # 2. path name
     # 3. model
     examinations = [
         ('acoustic', 'session_detail_data_acoustic', DataAcoustic),
-        ('questionnaire', 'session_detail_data_questionnaire', DataQuestionnaire)
+        ('actigraphy', 'session_detail_data_actigraphy', DataActigraphy),
+        ('handwriting', 'session_detail_data_handwriting', DataHandwriting),
+        ('psychology', 'session_detail_data_psychology', DataPsychology),
+        ('tcs', 'session_detail_data_tcs', DataTCS),
+        ('cei', 'session_detail_data_cei', DataCEI)
     ]
 
     def get_queryset(self):
@@ -462,11 +489,11 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
-class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView):
-    """Class implementing session: questionnaire data detail view"""
+class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
+    """Class implementing session: actigraphy data detail view"""
 
     # Define the template name
-    template_name = 'subjects/session_detail_data_questionnaire.html'
+    template_name = 'subjects/session_detail_data_actigraphy.html'
 
     # Define the slug attributes to enable filtering based on the specified field
     slug_field = 'session_number'
@@ -486,27 +513,30 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
         """Enriches the context with additional data"""
 
         # Get the context
-        context = super(SessionDataQuestionnaireDetailView, self).get_context_data(**kwargs)
+        context = super(SessionDataActigraphyDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        questionnaire_data = DataQuestionnaire.get_data(examination_session=self.object.id)
+        actigraphy_data = DataActigraphy.get_data(examination_session=self.object.id)
 
-        # Prepare the questionnaire data
-        if questionnaire_data:
-            questionnaire_data = FeaturesFormatter(DataQuestionnaire).prepare_presentable(
-                record=questionnaire_data,
-                use_questions=True)
+        # Prepare the actigraphy data
+        if actigraphy_data:
+            actigraphy_data = FeaturesFormatter(DataActigraphy).prepare_presentable(record=actigraphy_data)
 
-        # Add the questionnaire data
-        context.update({'questionnaire_data': questionnaire_data})
+        # Add the acoustic data
+        context.update({'actigraphy_data': actigraphy_data})
 
-        # Add the pagination if there are any loaded questionnaire data
-        if questionnaire_data:
-            paginator = Paginator(questionnaire_data, self.paginate_by)
+        # Filter the actigraphy data and add the filtration into the context
+        if actigraphy_data and self.request.GET.get('q'):
+            actigraphy_data = [data for data in actigraphy_data if self.request.GET.get('q') in data.get('label')]
+            context.update({'q': self.request.GET.get('q')})
+
+        # Add the pagination if there are any loaded actigraphy data
+        if actigraphy_data:
+            paginator = Paginator(actigraphy_data, self.paginate_by)
             goto_page = self.request.GET.get('page')
 
             context.update({
-                'is_paginated': True if questionnaire_data and len(questionnaire_data) > self.paginate_by else False,
+                'is_paginated': True if actigraphy_data and len(actigraphy_data) > self.paginate_by else False,
                 'paginator': paginator,
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
@@ -516,17 +546,17 @@ class SessionDataQuestionnaireDetailView(LoginRequiredMixin, generic.DetailView)
         return context
 
 
-class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView):
-    """Class implementing session: questionnaire data create view"""
+class SessionDataActigraphyUpdateView(LoginRequiredMixin, generic.CreateView):
+    """Class implementing session: actigraphy data update view"""
 
     # Define the template name
-    template_name = 'subjects/session_create_data_questionnaire.html'
+    template_name = 'subjects/session_update_data_actigraphy.html'
 
     # Define the model name
-    model = DataQuestionnaire
+    model = DataActigraphy
 
     # Define the form class
-    form_class = DataQuestionnaireForm
+    form_class = DataActigraphyForm
 
     def form_valid(self, form):
         """Form valid hook: sets data's session after created"""
@@ -539,19 +569,30 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
         data.save()
 
         # Return the updated data
-        return super(SessionDataQuestionnaireCreateView, self).form_valid(form)
+        return super(SessionDataActigraphyUpdateView, self).form_valid(form)
+
+    def set_session(self, data):
+        """Sets the session for a given data after creating"""
+
+        # Update the examination session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Return the updated data
+        return data
 
     def get_success_url(self):
         """Returns the success URL"""
         return reverse_lazy(
-            'subjects:session_detail_data_questionnaire',
+            'subjects:session_detail_data_actigraphy',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
 
     def get_context_data(self, **kwargs):
         """Enriches the context with additional data"""
 
         # Get the context
-        context = super(SessionDataQuestionnaireCreateView, self).get_context_data(**kwargs)
+        context = super(SessionDataActigraphyUpdateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
         session = ExaminationSession.get_session(
@@ -564,85 +605,88 @@ class SessionDataQuestionnaireCreateView(LoginRequiredMixin, generic.CreateView)
         # Return the updated context
         return context
 
-    def set_session(self, data):
-        """Sets the session for a given data after creating"""
 
-        # Update the examination session
-        data.examination_session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Return the updated data
-        return data
-
-
-class SessionDataQuestionnaireUpdateView(LoginRequiredMixin, generic.UpdateView):
-    """Class implementing session: questionnaire data update view"""
+class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
+    """Class implementing session: handwriting data detail view"""
 
     # Define the template name
-    template_name = 'subjects/session_update_data_questionnaire.html'
+    template_name = 'subjects/session_detail_data_handwriting.html'
 
-    # Define the model
-    model = DataQuestionnaire
+    # Define the slug attributes to enable filtering based on the specified field
+    slug_field = 'session_number'
+    slug_url_kwarg = 'session_number'
 
-    # Define the form class
-    form_class = DataQuestionnaireForm
+    # Define the context object name
+    context_object_name = 'session'
 
-    def get_object(self, queryset=None):
-        """Gets the object to be returned"""
+    # Define the pagination
+    paginate_by = 5
+
+    def get_queryset(self):
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataHandwritingDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
+        handwriting_data = DataHandwriting.get_data(examination_session=self.object.id)
 
-        # Return the object
-        return DataQuestionnaire.get_data(examination_session=session)
+        # Prepare the acoustic data
+        if handwriting_data:
+            handwriting_data = FeaturesFormatter(DataHandwriting).prepare_presentable(record=handwriting_data)
 
-    def get_success_url(self):
-        """Returns the success URL"""
-        return reverse_lazy(
-            'subjects:session_detail_data_questionnaire',
-            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+        # Add the handwriting data
+        context.update({'handwriting_data': handwriting_data})
+
+        # Filter the handwriting data and add the filtration into the context
+        if handwriting_data and self.request.GET.get('q'):
+            handwriting_data = [data for data in handwriting_data if self.request.GET.get('q') in data.get('label')]
+            context.update({'q': self.request.GET.get('q')})
+
+        # Add the pagination if there are any loaded handwriting data
+        if handwriting_data:
+            paginator = Paginator(handwriting_data, self.paginate_by)
+            goto_page = self.request.GET.get('page')
+
+            context.update({
+                'is_paginated': True if handwriting_data and len(handwriting_data) > self.paginate_by else False,
+                'paginator': paginator,
+                'page_number': self.request.GET.get('page'),
+                'page_obj': paginator.get_page(goto_page)
+            })
+
+        # Return the updated context
+        return context
 
 
-class SessionDataQuestionnaireUploadView(LoginRequiredMixin, generic.FormView):
-    """Class implementing session: questionnaire data upload view"""
+class SessionDataHandwritingUpdateView(LoginRequiredMixin, generic.CreateView):
+    """Class implementing session: handwriting data update view"""
 
     # Define the template name
-    template_name = 'subjects/session_upload_data_questionnaire.html'
+    template_name = 'subjects/session_update_data_handwriting.html'
 
     # Define the model name
-    model = DataQuestionnaire
+    model = DataHandwriting
 
     # Define the form class
-    form_class = UploadFileForm
+    form_class = DataHandwritingForm
 
     def form_valid(self, form):
         """Form valid hook: sets data's session after created"""
 
-        # Get the data
-        data = DataQuestionnaire.get_data(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
+        # Save the form without database update
+        data = form.save(commit=False)
 
-        # If the questionnaire does not exist yet, create it from the form data
-        if not data:
-
-            # Get the examination session
-            session = ExaminationSession.get_session(
-                subject_code=self.kwargs.get('code'),
-                session_number=self.kwargs.get('session_number'))
-
-            # Create the questionnaire data
-            DataQuestionnaire.create_from_form(form, examination_session=session)
-
-        # Otherwise, update the questionnaire from the form
-        else:
-            DataQuestionnaire.update_from_form(form, data)
+        # Update the session and update the database records
+        data = self.set_session(data)
+        data.save()
 
         # Return the updated data
-        return super(SessionDataQuestionnaireUploadView, self).form_valid(form)
+        return super(SessionDataHandwritingUpdateView, self).form_valid(form)
 
     def set_session(self, data):
         """Sets the session for a given data after creating"""
@@ -658,14 +702,365 @@ class SessionDataQuestionnaireUploadView(LoginRequiredMixin, generic.FormView):
     def get_success_url(self):
         """Returns the success URL"""
         return reverse_lazy(
-            'subjects:session_detail_data_questionnaire',
+            'subjects:session_detail_data_handwriting',
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
 
     def get_context_data(self, **kwargs):
         """Enriches the context with additional data"""
 
         # Get the context
-        context = super(SessionDataQuestionnaireUploadView, self).get_context_data(**kwargs)
+        context = super(SessionDataHandwritingUpdateView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Add the examination session
+        context.update({'session': session})
+
+        # Return the updated context
+        return context
+
+
+class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
+    """Class implementing session: psychology data detail view"""
+
+    # Define the template name
+    template_name = 'subjects/session_detail_data_psychology.html'
+
+    # Define the slug attributes to enable filtering based on the specified field
+    slug_field = 'session_number'
+    slug_url_kwarg = 'session_number'
+
+    # Define the context object name
+    context_object_name = 'session'
+
+    # Define the pagination
+    paginate_by = 5
+
+    def get_queryset(self):
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataPsychologyDetailView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        psychology_data = DataPsychology.get_data(examination_session=self.object.id)
+
+        # Prepare the psychology data
+        if psychology_data:
+            psychology_data = FeaturesFormatter(DataPsychology).prepare_presentable(record=psychology_data)
+
+        # Add the psychology data
+        context.update({'psychology_data': psychology_data})
+
+        # Filter the psychology data and add the filtration into the context
+        if psychology_data and self.request.GET.get('q'):
+            psychology_data = [data for data in psychology_data if self.request.GET.get('q') in data.get('label')]
+            context.update({'q': self.request.GET.get('q')})
+
+        # Add the pagination if there are any loaded psychology data
+        if psychology_data:
+            paginator = Paginator(psychology_data, self.paginate_by)
+            goto_page = self.request.GET.get('page')
+
+            context.update({
+                'is_paginated': True if psychology_data and len(psychology_data) > self.paginate_by else False,
+                'paginator': paginator,
+                'page_number': self.request.GET.get('page'),
+                'page_obj': paginator.get_page(goto_page)
+            })
+
+        # Return the updated context
+        return context
+
+
+class SessionDataPsychologyUpdateView(LoginRequiredMixin, generic.CreateView):
+    """Class implementing session: psychology data update view"""
+
+    # Define the template name
+    template_name = 'subjects/session_update_data_psychology.html'
+
+    # Define the model name
+    model = DataPsychology
+
+    # Define the form class
+    form_class = DataPsychologyForm
+
+    def form_valid(self, form):
+        """Form valid hook: sets data's session after created"""
+
+        # Save the form without database update
+        data = form.save(commit=False)
+
+        # Update the session and update the database records
+        data = self.set_session(data)
+        data.save()
+
+        # Return the updated data
+        return super(SessionDataPsychologyUpdateView, self).form_valid(form)
+
+    def set_session(self, data):
+        """Sets the session for a given data after creating"""
+
+        # Update the examination session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Return the updated data
+        return data
+
+    def get_success_url(self):
+        """Returns the success URL"""
+        return reverse_lazy(
+            'subjects:session_detail_data_psychology',
+            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataPsychologyUpdateView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Add the examination session
+        context.update({'session': session})
+
+        # Return the updated context
+        return context
+
+
+class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
+    """Class implementing session: TCS data detail view"""
+
+    # Define the template name
+    template_name = 'subjects/session_detail_data_tcs.html'
+
+    # Define the slug attributes to enable filtering based on the specified field
+    slug_field = 'session_number'
+    slug_url_kwarg = 'session_number'
+
+    # Define the context object name
+    context_object_name = 'session'
+
+    # Define the pagination
+    paginate_by = 5
+
+    def get_queryset(self):
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataTCSDetailView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        tcs_data = DataTCS.get_data(examination_session=self.object.id)
+
+        # Prepare the tcs data
+        if tcs_data:
+            tcs_data = FeaturesFormatter(DataTCS).prepare_presentable(record=tcs_data)
+
+        # Add the tcs data
+        context.update({'tcs_data': tcs_data})
+
+        # Filter the tcs data and add the filtration into the context
+        if tcs_data and self.request.GET.get('q'):
+            tcs_data = [data for data in tcs_data if self.request.GET.get('q') in data.get('label')]
+            context.update({'q': self.request.GET.get('q')})
+
+        # Add the pagination if there are any loaded tcs data
+        if tcs_data:
+            paginator = Paginator(tcs_data, self.paginate_by)
+            goto_page = self.request.GET.get('page')
+
+            context.update({
+                'is_paginated': True if tcs_data and len(tcs_data) > self.paginate_by else False,
+                'paginator': paginator,
+                'page_number': self.request.GET.get('page'),
+                'page_obj': paginator.get_page(goto_page)
+            })
+
+        # Return the updated context
+        return context
+
+
+class SessionDataTCSUpdateView(LoginRequiredMixin, generic.CreateView):
+    """Class implementing session: TCS data update view"""
+
+    # Define the template name
+    template_name = 'subjects/session_update_data_tcs.html'
+
+    # Define the model name
+    model = DataTCS
+
+    # Define the form class
+    form_class = DataTCSForm
+
+    def form_valid(self, form):
+        """Form valid hook: sets data's session after created"""
+
+        # Save the form without database update
+        data = form.save(commit=False)
+
+        # Update the session and update the database records
+        data = self.set_session(data)
+        data.save()
+
+        # Return the updated data
+        return super(SessionDataTCSUpdateView, self).form_valid(form)
+
+    def set_session(self, data):
+        """Sets the session for a given data after creating"""
+
+        # Update the examination session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Return the updated data
+        return data
+
+    def get_success_url(self):
+        """Returns the success URL"""
+        return reverse_lazy(
+            'subjects:session_detail_data_tcs',
+            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataTCSUpdateView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Add the examination session
+        context.update({'session': session})
+
+        # Return the updated context
+        return context
+
+
+class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
+    """Class implementing session: CEI data detail view"""
+
+    # Define the template name
+    template_name = 'subjects/session_detail_data_cei.html'
+
+    # Define the slug attributes to enable filtering based on the specified field
+    slug_field = 'session_number'
+    slug_url_kwarg = 'session_number'
+
+    # Define the context object name
+    context_object_name = 'session'
+
+    # Define the pagination
+    paginate_by = 5
+
+    def get_queryset(self):
+        """Gets the queryset to be returned"""
+        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataCEIDetailView, self).get_context_data(**kwargs)
+
+        # Get the examination session for given URL parameters
+        cei_data = DataCEI.get_data(examination_session=self.object.id)
+
+        # Prepare the cei data
+        if cei_data:
+            cei_data = FeaturesFormatter(DataCEI).prepare_presentable(record=cei_data)
+
+        # Add the cei data
+        context.update({'cei_data': cei_data})
+
+        # Filter the cei data and add the filtration into the context
+        if cei_data and self.request.GET.get('q'):
+            cei_data = [data for data in cei_data if self.request.GET.get('q') in data.get('label')]
+            context.update({'q': self.request.GET.get('q')})
+
+        # Add the pagination if there are any loaded cei data
+        if cei_data:
+            paginator = Paginator(cei_data, self.paginate_by)
+            goto_page = self.request.GET.get('page')
+
+            context.update({
+                'is_paginated': True if cei_data and len(cei_data) > self.paginate_by else False,
+                'paginator': paginator,
+                'page_number': self.request.GET.get('page'),
+                'page_obj': paginator.get_page(goto_page)
+            })
+
+        # Return the updated context
+        return context
+
+
+class SessionDataCEIUpdateView(LoginRequiredMixin, generic.CreateView):
+    """Class implementing session: cei data update view"""
+
+    # Define the template name
+    template_name = 'subjects/session_update_data_cei.html'
+
+    # Define the model name
+    model = DataCEI
+
+    # Define the form class
+    form_class = DataCEIForm
+
+    def form_valid(self, form):
+        """Form valid hook: sets data's session after created"""
+
+        # Save the form without database update
+        data = form.save(commit=False)
+
+        # Update the session and update the database records
+        data = self.set_session(data)
+        data.save()
+
+        # Return the updated data
+        return super(SessionDataCEIUpdateView, self).form_valid(form)
+
+    def set_session(self, data):
+        """Sets the session for a given data after creating"""
+
+        # Update the examination session
+        data.examination_session = ExaminationSession.get_session(
+            subject_code=self.kwargs.get('code'),
+            session_number=self.kwargs.get('session_number'))
+
+        # Return the updated data
+        return data
+
+    def get_success_url(self):
+        """Returns the success URL"""
+        return reverse_lazy(
+            'subjects:session_detail_data_cei',
+            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
+
+    def get_context_data(self, **kwargs):
+        """Enriches the context with additional data"""
+
+        # Get the context
+        context = super(SessionDataCEIUpdateView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
         session = ExaminationSession.get_session(
@@ -684,6 +1079,26 @@ def export_acoustic_data(request, code, session_number):
     return export_data(request, code, session_number, model=DataAcoustic)
 
 
-def export_questionnaire_data(request, code, session_number):
-    """Exports the questionnaire data in a CSV file"""
-    return export_data(request, code, session_number, model=DataQuestionnaire)
+def export_actigraphy_data(request, code, session_number):
+    """Exports the actigraphy data in a CSV file"""
+    return export_data(request, code, session_number, model=DataActigraphy)
+
+
+def export_handwriting_data(request, code, session_number):
+    """Exports the handwriting data in a CSV file"""
+    return export_data(request, code, session_number, model=DataHandwriting)
+
+
+def export_psychology_data(request, code, session_number):
+    """Exports the psychology data in a CSV file"""
+    return export_data(request, code, session_number, model=DataPsychology)
+
+
+def export_tcs_data(request, code, session_number):
+    """Exports the TCS data in a CSV file"""
+    return export_data(request, code, session_number, model=DataTCS)
+
+
+def export_cei_data(request, code, session_number):
+    """Exports the CEI data in a CSV file"""
+    return export_data(request, code, session_number, model=DataCEI)

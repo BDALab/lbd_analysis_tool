@@ -44,7 +44,7 @@ class FeaturesFormatter(object):
         if not value or value == cls.UNFILLED_FEATURE_VALUE_REAL:
             return cls.UNFILLED_FEATURE_VALUE_REPR
         else:
-            return value
+            return round(value, 4) if isinstance(value, float) else value
 
     @classmethod
     def adjust_feature_label_for_computation(cls, label):
@@ -174,3 +174,36 @@ class FeaturesFormatter(object):
             feature[cls.FEATURE_LABEL_FIELD]: cls.sanitize_feature_value(feature[cls.FEATURE_VALUE_FIELD])}
             for feature in features
         ])
+
+
+def format_feature_data_type(feature, configuration):
+    """
+    Formats the feature data type.
+
+    :param feature: value of the feature
+    :type feature: int, float, str, None or np.NaN
+    :param configuration: configuration of the feature
+    :return: formatted feature
+    :rtype: int, float, str or np.NaN
+    """
+
+    # Validate the input values
+    if not feature:
+        return None
+    if not configuration:
+        return feature
+
+    # Get the feature type
+    feature_type = configuration.get("type", "numerical")
+
+    # Format the data type
+    if feature_type == "numerical":
+        return float(feature) if configuration.get("data_type", "float") else int(feature)
+    else:
+        data_type = configuration.get("data_type", "str")
+        if data_type not in ("str", "int"):
+            raise TypeError(f"Unsupported feature type {feature} ({type(feature)})")
+        if data_type == "str":
+            return str(feature)
+        if data_type == "int":
+            return int(float(feature))

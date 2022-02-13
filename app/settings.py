@@ -172,6 +172,10 @@ PREDICTOR_CONFIGURATION = load_configuration('predictor.json')
 DATA_CONFIGURATION = load_configuration('data.json')
 
 
+# Import settings
+IMPORT_CONFIGURATION = load_configuration('import.json')
+
+
 # # Logging settings
 # LOGGING = {
 #     'version': 1,
