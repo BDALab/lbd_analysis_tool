@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load template_helpers %}
+{% load humanize %}
 
 {% block content %}
 
@@ -175,9 +176,11 @@
                                                 <div class="text-sm text-gray-900">
                                                     Acquired {{ subject.num_sessions }} examination session(s)
                                                 </div>
-                                                <!-- <div class="text-sm text-gray-500">
-                                                    latest 2 day(s) ago
-                                                </div> -->
+                                                {% if subject.last_examined_on is not none %}
+                                                    <div class="text-sm text-gray-500">
+                                                        latest {{ subject.last_examined_on|naturaltime }}
+                                                    </div>
+                                                {% endif %}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
                                                 {% if not subject.lbd_probability %}

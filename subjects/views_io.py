@@ -6,14 +6,14 @@ from django.conf import settings
 from .models import Subject, ExaminationSession, DATA_TO_MODEL_CLASS_MAPPING
 from .models_formatters import FeaturesFormatter
 from .models_io import open_excel_file
-from .views_io_utils import parse_sex, parse_year_of_birth
+from .views_io_utils import parse_sex, parse_year, parse_date
 
 
 # Import configuration
 import_configuration = getattr(settings, 'IMPORT_CONFIGURATION')
 
 
-def import_session_data(user, subject, session_number, session_prefix, features_data):
+def import_session_data(user, subject, session_number, session_prefix, identity_data, features_data):
     """
     Imports the session from the data provided from the external source.
 
@@ -25,6 +25,8 @@ def import_session_data(user, subject, session_number, session_prefix, features_
     :type session_number: int
     :param session_prefix: session prefix
     :type session_prefix: str
+    :param identity_data: data for the identity of the subjects
+    :type identity_data: pandas.Series
     :param features_data: data for the examination sessions and features of the subjects
     :type features_data: dict with pandas.Series
     :return: None
@@ -36,9 +38,16 @@ def import_session_data(user, subject, session_number, session_prefix, features_
         session = ExaminationSession.objects.get(subject=subject, session_number=session_number)
         setattr(session, 'subject', subject)
         setattr(session, 'session_number', session_number)
-        setattr(session, 'internal_prefix', session_prefix)
     except ObjectDoesNotExist:
         session = ExaminationSession(subject=subject, session_number=session_number)
+
+    # Update the examination's internal prefix
+    session.internal_prefix = session_prefix
+
+    # Update the examination's timestamp
+    field_name = f'{session_prefix} {import_configuration["date_of_examination"]}'
+    field_data = identity_data[field_name] if field_name in identity_data.index else None
+    session.examined_on = parse_date(field_data)
 
     # Save the session instance
     session.save()
@@ -104,7 +113,7 @@ def import_session_data(user, subject, session_number, session_prefix, features_
         data.save()
 
 
-def import_sessions_data(user, subject, features_data):
+def import_sessions_data(user, subject, identity_data, features_data):
     """
     Imports the sessions from the data provided from the external source.
 
@@ -112,6 +121,8 @@ def import_sessions_data(user, subject, features_data):
     :type user: User instance
     :param subject: subject
     :type subject: Subject instance
+    :param identity_data: data for the identity of the subjects
+    :type identity_data: pandas.Series
     :param features_data: data for the examination sessions and features of the subjects
     :type features_data: dict with pandas.Series
     :return: None
@@ -140,7 +151,7 @@ def import_sessions_data(user, subject, features_data):
 
     # Import the sessions
     for session_number, session_prefix in enumerate(session_iterator, 1):
-        import_session_data(user, subject, session_number, session_prefix, features_data)
+        import_session_data(user, subject, session_number, session_prefix, identity_data, features_data)
 
 
 def import_subject_data(user, subject_code, df_identity, df_features):
@@ -170,7 +181,7 @@ def import_subject_data(user, subject_code, df_identity, df_features):
     fields = {
         'code': subject_code,
         'sex': parse_sex(identity_data['Sex']),
-        'year_of_birth': parse_year_of_birth(identity_data['Date of birth'])
+        'year_of_birth': parse_year(identity_data['Date of birth'])
     }
 
     # Create/update the subject
@@ -185,7 +196,7 @@ def import_subject_data(user, subject_code, df_identity, df_features):
     subject.save()
 
     # Import the sessions
-    import_sessions_data(user, subject, features_data)
+    import_sessions_data(user, subject, identity_data, features_data)
 
 
 def import_subjects_data(user, df_identity, df_features):

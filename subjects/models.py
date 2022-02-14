@@ -23,6 +23,7 @@ from .models_configuration import (
 )
 from .models_signals import (
     prepare_predictor_api_for_created_user,
+    update_last_examined_on_for_subject,
     invalidate_cached_lbd_prediction_for_session,
     invalidate_cached_lbd_prediction_for_subject
 )
@@ -111,8 +112,9 @@ class Subject(models.Model):
     code = models.CharField('subject code', max_length=50, unique=True)
     year_of_birth = models.SmallIntegerField('year of birth', null=True, blank=True)
     sex = models.CharField('sex', max_length=1, choices=SEX, null=True, blank=True)
-    created_on = models.DateField('created on', auto_now_add=True)
-    updated_on = models.DateField('updated on', auto_now=True)
+    created_on = models.DateTimeField('created on', auto_now_add=True)
+    updated_on = models.DateTimeField('updated on', auto_now=True)
+    last_examined_on = models.DateTimeField('last examined on', null=True, blank=True)
     lbd_probability = models.FloatField('lbd_probability', null=True, blank=True)
 
     def __str__(self):
@@ -241,8 +243,9 @@ class ExaminationSession(models.Model):
     subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
     session_number = models.SmallIntegerField('session number')
     internal_prefix = models.CharField('internal prefix', max_length=50, null=True, blank=True)
-    created_on = models.DateField('created on', auto_now_add=True)
-    updated_on = models.DateField('updated on', auto_now=True)
+    created_on = models.DateTimeField('created on', auto_now_add=True)
+    updated_on = models.DateTimeField('updated on', auto_now=True)
+    examined_on = models.DateTimeField('examined on', null=True, blank=True)
 
     def __str__(self):
         return f'{self.session_number}. session for subject: {self.subject.code}'
@@ -356,7 +359,6 @@ class CommonExaminationSessionData(models.Model):
 
     # Define the model schema
     examination_session = models.OneToOneField('ExaminationSession', on_delete=models.CASCADE, primary_key=True)
-    description = models.CharField('description', max_length=255, null=True, blank=True)
 
     @classmethod
     def get_features_from_record(cls, record, **kwargs):
@@ -554,6 +556,7 @@ post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataPsych
 post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataTCS)
 post_save.connect(invalidate_cached_lbd_prediction_for_session, sender=DataCEI)
 post_save.connect(invalidate_cached_lbd_prediction_for_subject, sender=Subject)
+post_save.connect(update_last_examined_on_for_subject, sender=ExaminationSession)
 
 
 # Define the data to the model class mapping
