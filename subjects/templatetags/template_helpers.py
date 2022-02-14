@@ -20,7 +20,7 @@ def relative_url(value, field_name, urlencode=None):
         query_string = '&'.join(query_string)
 
         # Join the attributes
-        url = '{}&{}'.format(url, query_string)
+        url = f'{url}&{query_string}'
 
     # Return the relative URL
     return url
