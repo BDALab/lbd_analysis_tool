@@ -93,7 +93,7 @@ class SubjectListView(LoginRequiredMixin, generic.ListView):
     context_object_name = 'subjects'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 10
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
