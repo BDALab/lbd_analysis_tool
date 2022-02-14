@@ -198,12 +198,18 @@ def format_feature_data_type(feature, configuration):
 
     # Format the data type
     if feature_type == "numerical":
-        return float(feature) if configuration.get("data_type", "float") else int(feature)
+        try:
+            return float(feature) if configuration.get("data_type", "float") else int(feature)
+        except ValueError:
+            return None
     else:
         data_type = configuration.get("data_type", "str")
         if data_type not in ("str", "int"):
             raise TypeError(f"Unsupported feature type {feature} ({type(feature)})")
-        if data_type == "str":
-            return str(feature)
-        if data_type == "int":
-            return int(float(feature))
+        try:
+            if data_type == "str":
+                return str(feature)
+            if data_type == "int":
+                return int(float(feature))
+        except ValueError:
+            return None
