@@ -41,13 +41,14 @@ class SubjectLBDPredictor(BaseLBDPredictor):
 
         # Get the examination sessions of a subject (order from newest to oldest)
         sessions = ExaminationSession.get_sessions(subject=instance, order_by=('-session_number', ))
-        if not sessions.first():
+
+        # Get the latest examination session
+        latest_session = sessions.first()
+        if not latest_session:
             return None
 
         # Get the LBD probability for the last examination session with data
-        lbd_probability = None
-        for session in sessions:
-            lbd_probability = ExaminationSessionLBDPredictor.predict_lbd_probability(user, session)
+        lbd_probability = ExaminationSessionLBDPredictor.predict_lbd_probability(user, latest_session)
 
         # Cache the predicted LBD probability (if not None)
         if lbd_probability is not None:
