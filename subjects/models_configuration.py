@@ -68,20 +68,6 @@ class CommonDataConfiguration(object):
         return cls.get_feature_type(feature_name) == 'numerical'
 
 
-class CommonDataQuestionnaireBasedConfiguration(CommonDataConfiguration):
-    """Base class for questionnaire based configuration"""
-
-    @classmethod
-    def get_questionnaire(cls):
-        """Returns the questionnaire (list of dicts)"""
-        return [item for item in cls.database.get('questionnaire')]
-
-    @classmethod
-    def get_questions(cls):
-        """Returns the questionnaire questions"""
-        return [item['question'] for item in cls.get_questionnaire()]
-
-
 class CommonDataFeatureBasedConfiguration(CommonDataConfiguration):
     """Base class for feature based configuration"""
 
@@ -95,20 +81,52 @@ class CommonDataFeatureBasedConfiguration(CommonDataConfiguration):
     data_path = os.path.join(getattr(settings, 'MEDIA_ROOT'), data_field)
 
 
-class DataQuestionnaireConfiguration(CommonDataQuestionnaireBasedConfiguration):
-    """Class implementing questionnaire data configuration"""
-
-    # Load the configuration
-    database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['questionnaire']
-    predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['questionnaire']
-
-
 class DataAcousticConfiguration(CommonDataFeatureBasedConfiguration):
     """Class implementing acoustic data configuration"""
 
     # Load the configuration
     database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['acoustic']
     predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['acoustic']
+
+
+class DataActigraphyConfiguration(CommonDataFeatureBasedConfiguration):
+    """Class implementing actigraphy data configuration"""
+
+    # Load the configuration
+    database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['actigraphy']
+    predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['actigraphy']
+
+
+class DataHandwritingConfiguration(CommonDataFeatureBasedConfiguration):
+    """Class implementing handwriting data configuration"""
+
+    # Load the configuration
+    database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['handwriting']
+    predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['handwriting']
+
+
+class DataPsychologyConfiguration(CommonDataFeatureBasedConfiguration):
+    """Class implementing psychology data configuration"""
+
+    # Load the configuration
+    database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['psychology']
+    predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['psychology']
+
+
+class DataTCSConfiguration(CommonDataFeatureBasedConfiguration):
+    """Class implementing TCS data configuration"""
+
+    # Load the configuration
+    database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['tcs']
+    predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['tcs']
+
+
+class DataCEIConfiguration(CommonDataFeatureBasedConfiguration):
+    """Class implementing CEI data configuration"""
+
+    # Load the configuration
+    database = getattr(settings, 'DATA_CONFIGURATION')['data']['session']['cei']
+    predictor = getattr(settings, 'PREDICTOR_CONFIGURATION')['data']['session']['cei']
 
 
 class SubjectDataConfiguration(CommonDataConfiguration):

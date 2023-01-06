@@ -32,6 +32,34 @@ def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
         instance.save()
 
 
+def update_last_examined_on_for_subject(sender, instance, created, **kwargs):
+    """
+    Updates the last examined on timestamp for the subject.
+
+    :param sender: sender class
+    :type sender: User
+    :param instance: instance object
+    :type instance: ExaminationSession instance
+    :param created: creation flag (True if created; False otherwise)
+    :type created bool
+    :param kwargs: additional keyword arguments
+    :type kwargs: dict
+    :return: None
+    :rtype: None type
+    """
+
+    # Get the timestamps for the subject's examination sessions
+    examined_on = [
+        session.examined_on for session in instance.get_sessions(subject=instance.subject)
+        if session.examined_on
+    ]
+
+    # Update the last examined on of the subject
+    if examined_on:
+        instance.subject.last_examined_on = max(examined_on)
+        instance.subject.save()
+
+
 def invalidate_cached_lbd_prediction_for_session(sender, instance, created, **kwargs):
     """
     Invalidates the cached LBD prediction for an examination session.

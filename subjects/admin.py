@@ -5,7 +5,11 @@ from .models import (
     Subject,
     ExaminationSession,
     DataAcoustic,
-    DataQuestionnaire
+    DataActigraphy,
+    DataHandwriting,
+    DataPsychology,
+    DataTCS,
+    DataCEI
 )
 
 
@@ -15,4 +19,8 @@ admin.site.register(Organization)
 admin.site.register(Subject)
 admin.site.register(ExaminationSession)
 admin.site.register(DataAcoustic)
-admin.site.register(DataQuestionnaire)
+admin.site.register(DataActigraphy)
+admin.site.register(DataHandwriting)
+admin.site.register(DataPsychology)
+admin.site.register(DataTCS)
+admin.site.register(DataCEI)

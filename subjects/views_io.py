@@ -1,40 +1,53 @@
 import pandas
+from itertools import chain
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.base import ContentFile
+from django.conf import settings
 from .models import Subject, ExaminationSession, DATA_TO_MODEL_CLASS_MAPPING
 from .models_formatters import FeaturesFormatter
-from .models_io import is_csv_file, is_excel_file, read_subjects_from_csv, read_subjects_from_excel
+from .models_io import open_excel_file
+from .views_io_utils import parse_sex, parse_year, parse_date
 
 
-def import_session_data(subject, session_data):
+# Import configuration
+import_configuration = getattr(settings, 'IMPORT_CONFIGURATION')
+
+
+def import_session_data(user, subject, session_number, session_prefix, identity_data, features_data):
     """
     Imports the session from the data provided from the external source.
 
-    :param subject: subject record
+    :param user: logged-in user
+    :type user: User instance
+    :param subject: subject
     :type subject: Subject instance
-    :param session_data: data for the session (columns + one data row)
-    :type session_data: pandas.DataFrame
+    :param session_number: session number
+    :type session_number: int
+    :param session_prefix: session prefix
+    :type session_prefix: str
+    :param identity_data: data for the identity of the subjects
+    :type identity_data: pandas.Series
+    :param features_data: data for the examination sessions and features of the subjects
+    :type features_data: dict with pandas.Series
     :return: None
     :rtype: None type
     """
 
-    # Get the available information in the provided session data
-    available_information = session_data.columns
-
-    # Validate the input attributes
-    if 'session_number' not in available_information:
-        return
-
-    # Prepare the fields
-    fields = {'session_number': session_data['session_number'].values[0]}
-
     # Create/update the examination session
     try:
-        session = ExaminationSession.objects.get(subject=subject, session_number=fields['session_number'])
+        session = ExaminationSession.objects.get(subject=subject, session_number=session_number)
         setattr(session, 'subject', subject)
-        setattr(session, 'session_number', fields['session_number'])
+        setattr(session, 'session_number', session_number)
     except ObjectDoesNotExist:
-        session = ExaminationSession(subject=subject, session_number=fields['session_number'])
+        session = ExaminationSession(subject=subject, session_number=session_number)
+
+    # Update the examination's internal prefix
+    session.internal_prefix = session_prefix
+
+    # Update the examination's timestamp
+    field_name = f'{session_prefix} {import_configuration["date_of_examination"]}'
+    field_data = identity_data[field_name] if field_name in identity_data.index else None
+    session.examined_on = parse_date(field_data)
 
     # Save the session instance
     session.save()
@@ -42,20 +55,33 @@ def import_session_data(subject, session_data):
     # Create/update the examination session data
     for label in ExaminationSession.EXAMINATION_DATA_SEQUENCE:
 
+        # Get the pandas.DataFrame with the features for the given examination session
+        s = features_data[label]
+        s = {feature: s.loc[feature] for feature in s.index if feature.startswith(session_prefix)}
+
+        # Get the available features
+        available_features = s.keys()
+
         # Get the model class from the data to model class mapping
         model = DATA_TO_MODEL_CLASS_MAPPING[label]
 
-        # Prepare the field
-        fields = {
-            feature: session_data[feature].values[0] if feature in available_information else None
+        # Get features to import (add the examination session prefix)
+        features_to_import = [
+            f'{session_prefix} {feature}'
             for feature in model.CONFIGURATION.get_available_feature_names()
+        ]
+
+        # Prepare the fields
+        fields = {
+            feature: s[feature] if feature in available_features else None
+            for feature in features_to_import
         }
 
         # Get the features from the session data
         features = [{
-            FeaturesFormatter.FEATURE_LABEL_FIELD: feature,
+            FeaturesFormatter.FEATURE_LABEL_FIELD: feature.replace(session_prefix, '').strip(),
             FeaturesFormatter.FEATURE_VALUE_FIELD: fields[feature]}
-            for feature in model.CONFIGURATION.get_available_feature_names()
+            for feature in features_to_import
         ]
 
         # Adjust the features
@@ -87,39 +113,82 @@ def import_session_data(subject, session_data):
         data.save()
 
 
-def import_sessions_data(user, sessions_data):
+def import_sessions_data(user, subject, identity_data, features_data):
     """
     Imports the sessions from the data provided from the external source.
 
     :param user: logged-in user
     :type user: User instance
-    :param sessions_data: data for the sessions (columns + 1-N data row(s))
-    :type sessions_data: pandas.DataFrame
+    :param subject: subject
+    :type subject: Subject instance
+    :param identity_data: data for the identity of the subjects
+    :type identity_data: pandas.Series
+    :param features_data: data for the examination sessions and features of the subjects
+    :type features_data: dict with pandas.Series
     :return: None
     :rtype: None type
     """
 
-    # Get the available information in the provided sessions data
-    available_information = sessions_data.columns
+    # Get the subject feature names
+    feature_names = list(set(chain.from_iterable(s.dropna().index.tolist() for s in features_data.values())))
 
-    # Validate the input attributes
-    if 'code' not in available_information or 'session_number' not in available_information:
+    # Get the session information (before session and normal sessions)
+    before_sessions = import_configuration.get('before_sessions', [])
+    normal_sessions = import_configuration.get('normal_sessions', [])
+    if not any((before_sessions, normal_sessions)):
         return
+
+    # Prepare the session iterator
+    session_iterator = []
+
+    # Fill the session iterator
+    for s in before_sessions:
+        if any(True if c.startswith(s) else False for c in feature_names):
+            session_iterator.append(s)
+    for s in normal_sessions:
+        if any(True if c.startswith(s) else False for c in feature_names):
+            session_iterator.append(s)
+
+    # Import the sessions
+    for session_number, session_prefix in enumerate(session_iterator, 1):
+        import_session_data(user, subject, session_number, session_prefix, identity_data, features_data)
+
+
+def import_subject_data(user, subject_code, df_identity, df_features):
+    """
+    Imports the subject from the data provided from the external source.
+
+    :param user: logged-in user
+    :type user: User instance
+    :param subject_code: code of the subject
+    :type subject_code: str
+    :param df_identity: data for the identity of the subjects
+    :type df_identity: pandas.DataFrame
+    :param df_features: data for the examination sessions and features of the subjects
+    :type df_features: dict with pandas.Dataframes
+    :return: None
+    :rtype: None type
+    """
+
+    # Get the subject's data
+    identity_data = df_identity.loc[subject_code]
+    features_data = {
+        k: (v.loc[subject_code] if subject_code in v.index else pandas.Series([]))
+        for k, v in df_features.items()
+    }
 
     # Prepare the fields
     fields = {
-        'code': sessions_data['code'].values[0],
-        'age': sessions_data['age'].values[0],
-        'sex': sessions_data['sex'].values[0],
-        'nationality': sessions_data['nationality'].values[0]
+        'code': subject_code,
+        'sex': parse_sex(identity_data['Sex']),
+        'year_of_birth': parse_year(identity_data['Date of birth'])
     }
 
     # Create/update the subject
     try:
         subject = Subject.objects.get(code=fields['code'])
-        setattr(subject, 'age', fields['age'])
+        setattr(subject, 'year_of_birth', fields['year_of_birth'])
         setattr(subject, 'sex', fields['sex'])
-        setattr(subject, 'nationality', fields['nationality'])
     except ObjectDoesNotExist:
         subject = Subject(organization=user.organization, **fields)
 
@@ -127,38 +196,29 @@ def import_sessions_data(user, sessions_data):
     subject.save()
 
     # Import the sessions
-    for session_number, session_data in sessions_data.groupby('session_number'):
-        import_session_data(subject, session_data)
+    import_sessions_data(user, subject, identity_data, features_data)
 
 
-def import_subject_data(user, subject_data):
-    """
-    Imports the subject from the data provided from the external source.
-
-    :param user: logged-in user
-    :type user: User instance
-    :param subject_data: data for the subject (columns + 1-N data row(s))
-    :type subject_data: pandas.DataFrame
-    :return: None
-    :rtype: None type
-    """
-    for session_number, sessions_data in subject_data.groupby('session_number'):
-        import_sessions_data(user, sessions_data)
-
-
-def import_subjects_data(user, subjects_data):
+def import_subjects_data(user, df_identity, df_features):
     """
     Imports the subjects from the data provided from the external source.
 
     :param user: logged-in user
     :type user: User instance
-    :param subjects_data: data for the subjects (columns + 1-N data row(s))
-    :type subjects_data: pandas.DataFrame
+    :param df_identity: data for the identity of the subjects
+    :type df_identity: pandas.DataFrame
+    :param df_features: data for the examination sessions and features of the subjects
+    :type df_features: dict with pandas.Dataframes
     :return: None
     :rtype: None type
     """
-    for code, sessions_data in subjects_data.groupby('code'):
-        import_subject_data(user, sessions_data)
+
+    # Get the list of subjects
+    subjects = list(set(code for code in df_identity.index if code and isinstance(code, str)))
+
+    # Import the sessions for every subject
+    for code in subjects:
+        import_subject_data(user, code, df_identity, df_features)
 
 
 def import_subjects_from_external_source(user, form):
@@ -166,15 +226,36 @@ def import_subjects_from_external_source(user, form):
 
     # Get the file from the uploaded form
     file = form.cleaned_data['file']
-    data = None
 
-    # Read the data from the file
-    if file:
-        if is_csv_file(file=file):
-            data = read_subjects_from_csv(file=file)
-        if is_excel_file(file=file):
-            data = read_subjects_from_excel(file=file)
+    with open_excel_file(file=file, path=None) as f:
 
-    # Import the subjects with the data (examination sessions and data)
-    if not data.empty:
-        import_subjects_data(user, data)
+        # Read the identities of the subjects
+        try:
+            df_identity = pandas.read_excel(
+                io=f,
+                sheet_name=import_configuration['identity_sheet'],
+                index_col=import_configuration['index_column'],
+                skiprows=import_configuration['skip_rows'])
+        except ValueError:
+            return
+
+        # Prepare the dict of pandas.DataFrames for features
+        df_features = {}
+
+        # Read the examination sessions and features
+        for feature_sheet in import_configuration['feature_sheets']:
+            try:
+                data = pandas.read_excel(
+                    io=f,
+                    sheet_name=feature_sheet,
+                    index_col=import_configuration['index_column'],
+                    skiprows=import_configuration['skip_rows'])
+            except ValueError:
+                continue
+
+            if not data.empty:
+                df_features[import_configuration['feature_sheets_mapping'][feature_sheet]] = data
+
+        # Import the subjects with the data (examination sessions and data)
+        if df_features:
+            import_subjects_data(user, df_identity, df_features)

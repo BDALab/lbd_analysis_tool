@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',
 
     # Third-party apps
     'crispy_forms',
@@ -170,6 +171,10 @@ PREDICTOR_CONFIGURATION = load_configuration('predictor.json')
 
 # Data settings
 DATA_CONFIGURATION = load_configuration('data.json')
+
+
+# Import settings
+IMPORT_CONFIGURATION = load_configuration('import.json')
 
 
 # # Logging settings

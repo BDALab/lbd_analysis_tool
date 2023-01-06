@@ -1,7 +1,15 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UsernameField
-from .models import Subject, DataAcoustic, DataQuestionnaire
+from .models import (
+    Subject,
+    DataAcoustic,
+    DataActigraphy,
+    DataHandwriting,
+    DataPsychology,
+    DataTCS,
+    DataCEI
+)
 
 
 # Get the Django-based user model
@@ -50,17 +58,69 @@ class DataAcousticForm(forms.ModelForm):
         fields = tuple(DataAcoustic.CONFIGURATION.get_form_fields())
 
 
-class DataQuestionnaireForm(forms.ModelForm):
-    """Class implementing questionnaire data form"""
+class DataActigraphyForm(forms.ModelForm):
+    """Class implementing actigraphy data form"""
 
     class Meta:
         """Form definition"""
 
         # Database model
-        model = DataQuestionnaire
+        model = DataActigraphy
 
         # Database model fields to be used in the form
-        fields = tuple(DataQuestionnaire.CONFIGURATION.get_form_fields())
+        fields = tuple(DataActigraphy.CONFIGURATION.get_form_fields())
+
+
+class DataHandwritingForm(forms.ModelForm):
+    """Class implementing handwriting data form"""
+
+    class Meta:
+        """Form definition"""
+
+        # Database model
+        model = DataHandwriting
+
+        # Database model fields to be used in the form
+        fields = tuple(DataHandwriting.CONFIGURATION.get_form_fields())
+
+
+class DataPsychologyForm(forms.ModelForm):
+    """Class implementing psychology data form"""
+
+    class Meta:
+        """Form definition"""
+
+        # Database model
+        model = DataPsychology
+
+        # Database model fields to be used in the form
+        fields = tuple(DataPsychology.CONFIGURATION.get_form_fields())
+
+
+class DataTCSForm(forms.ModelForm):
+    """Class implementing TCS data form"""
+
+    class Meta:
+        """Form definition"""
+
+        # Database model
+        model = DataTCS
+
+        # Database model fields to be used in the form
+        fields = tuple(DataTCS.CONFIGURATION.get_form_fields())
+
+
+class DataCEIForm(forms.ModelForm):
+    """Class implementing CEI data form"""
+
+    class Meta:
+        """Form definition"""
+
+        # Database model
+        model = DataCEI
+
+        # Database model fields to be used in the form
+        fields = tuple(DataCEI.CONFIGURATION.get_form_fields())
 
 
 class UploadFileForm(forms.Form):

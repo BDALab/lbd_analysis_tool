@@ -13,7 +13,7 @@ from django.contrib.auth.views import (
     PasswordResetCompleteView
 )
 
-# Import the subjects app views
+# Import the subjects' app views
 from subjects.views import LandingPageView, SignupView, SigninView
 
 

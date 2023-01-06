@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load template_helpers %}
 
 {% block content %}
 
@@ -8,7 +9,7 @@
             <!-- Examination information -->
             <div class="flex flex-col text-center w-full mb-5">
                 <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
-                    Questionnaire data
+                    Handwriting data
                 </h1>
 
                 <!-- Go to the session detail -->
@@ -24,80 +25,59 @@
 
             </div>
 
-            <!-- Session data navbar -->
-            <!-- <div class="flex mx-auto flex-wrap mb-5">
+            <!-- If there are any loaded handwriting data, show the table -->
+            {% if handwriting_data %}
 
-                <a href="{% url 'subjects:session_detail_data_acoustic' session.subject.code session.session_number %}" class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium bg-gray-100 inline-flex items-center leading-none border-gray-700 text-gray-700 rounded-t transform hover:border-indigo-500 hover:bg-indigo-500 hover:text-white tracking-wider hover:scale-103">
-                    <svg fill="none"
-                         stroke="currentColor"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         stroke-width="2"
-                         class="w-5 h-5 mr-3"
-                         viewBox="0 0 24 24">
-                        <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                    </svg>
-                    Acoustic
-                </a>
-
-                <a class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium inline-flex items-center leading-none border-indigo-600 bg-indigo-600 text-white tracking-wider rounded-t">
-                    <svg fill="none"
-                         stroke="currentColor"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         stroke-width="2"
-                         class="w-5 h-5 mr-3"
-                         viewBox="0 0 24 24">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    Questionnaire
-                </a>
-
-                <a href="#" class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium bg-gray-100 inline-flex items-center leading-none border-gray-700 text-gray-700 rounded-t transform hover:border-indigo-500 hover:bg-indigo-500 hover:text-white tracking-wider hover:scale-103">
-                    <svg fill="none"
-                         stroke="currentColor"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         stroke-width="2"
-                         class="w-5 h-5 mr-3"
-                         viewBox="0 0 24 24">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    STEP 3
-                </a>
-                <a href="#" class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium bg-gray-100 inline-flex items-center leading-none border-gray-700 text-gray-700 rounded-t transform hover:border-indigo-500 hover:bg-indigo-500 hover:text-white tracking-wider hover:scale-103">
-                    <svg fill="none"
-                         stroke="currentColor"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         stroke-width="2"
-                         class="w-5 h-5 mr-3"
-                         viewBox="0 0 24 24">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    STEP 4
-                </a>
-                <a href="#" class="sm:px-6 py-3 w-1/2 sm:w-auto justify-center sm:justify-start border-b-2 title-font font-medium bg-gray-100 inline-flex items-center leading-none border-gray-700 text-gray-700 rounded-t transform hover:border-indigo-500 hover:bg-indigo-500 hover:text-white tracking-wider hover:scale-103">
-                    <svg fill="none"
-                         stroke="currentColor"
-                         stroke-linecap="round"
-                         stroke-linejoin="round"
-                         stroke-width="2"
-                         class="w-5 h-5 mr-3"
-                         viewBox="0 0 24 24">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                    STEP 5
-                </a>
-
-            </div> -->
-
-            <!-- If there are any loaded questionnaire data, show the table -->
-            {% if questionnaire_data %}
                 <div class="mx-auto flex flex-wrap flex-col">
                     <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div class="py-2 align-middle inline-block mx-auto sm:px-6 lg:px-8">
                             <div class="my-10 shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+
+                                <!-- Full-text search/reset information -->
+                                <div class="flex">
+
+                                    <!-- Full-text search -->
+                                    <div class="flex mt-1 mb-1 mr-auto">
+                                        <div class="relative">
+                                            <form action="{% url 'subjects:session_detail_data_handwriting' session.subject.code session.session_number %}" method="get">
+                                                <div class="relative text-gray-600 focus-within:text-gray-400">
+                                                    <span class="absolute inset-y-0 left-0 flex items-center pl-2">
+                                                        <button type="submit"
+                                                                class="w-auto p-1 focus:outline-none focus:shadow-outline">
+                                                            <svg fill="none"
+                                                                 stroke="currentColor"
+                                                                 stroke-linecap="round"
+                                                                 stroke-linejoin="round"
+                                                                 stroke-width="2"
+                                                                 viewBox="0 0 24 24"
+                                                                 class="w-6 h-6">
+                                                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </span>
+                                                    {% if q %}
+                                                        <input type="text"
+                                                               name="q"
+                                                               class="py-2 ml-1 text-sm text-gray-600 bg-white rounded-md pl-10 focus:outline-none focus:shadow-outline focus:text-gray-800"
+                                                               value="{{ q }}">
+                                                    {% else %}
+                                                        <input type="text"
+                                                               name="q"
+                                                               class="py-2 ml-1 text-sm text-gray-600 bg-white rounded-md pl-10 focus:outline-none focus:shadow-outline focus:text-gray-800"
+                                                               placeholder="Search...">
+                                                    {% endif %}
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+
+                                    <!-- Reset -->
+                                    <a class="flex items-center text-center bg-gray-100 border-0 py-2 px-6 focus:outline-none hover:bg-gray-200 rounded text-gray-600"
+                                       href="{% url 'subjects:session_detail_data_handwriting' session.subject.code session.session_number %}">
+                                        Reset filter
+                                    </a>
+
+                                </div>
 
                                 <!-- Features table -->
                                 <table class="sortable divide-y divide-gray-200">
@@ -107,11 +87,11 @@
                                         <tr>
                                             <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                 scope="col">
-                                                Question
+                                                Feature labels
                                             </th>
                                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                 scope="col">
-                                                Response
+                                                Feature values
                                             </th>
                                         </tr>
                                     </thead>
@@ -119,26 +99,26 @@
                                     <!-- Table body -->
                                     <tbody class="bg-white divide-y divide-gray-200">
 
-                                        <!-- Questions and answers -->
+                                        <!-- Features -->
                                         {% if is_paginated %}
-                                            {% for item in page_obj.object_list %}
+                                            {% for feature in page_obj.object_list %}
                                                 <tr class="border-b border-gray-200 hover:bg-gray-100">
-                                                    <td title="{{ item.title }}" class="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-500">
-                                                        {{ item.label }}
+                                                    <td class="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-500">
+                                                        {{ feature.label }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                                        {{ item.value }}
+                                                        {{ feature.value }}
                                                     </td>
                                                 </tr>
                                             {% endfor %}
                                         {% else %}
-                                            {% for item in questionnaire_data %}
+                                            {% for feature in handwriting_data %}
                                                 <tr class="border-b border-gray-200 hover:bg-gray-100">
-                                                    <td title="{{ item.title }}" class="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-500">
-                                                        {{ item.label }}
+                                                    <td class="px-6 py-4 whitespace-nowrap text-left text-sm text-gray-500">
+                                                        {{ feature.label }}
                                                     </td>
                                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                                                        {{ item.value }}
+                                                        {{ feature.value }}
                                                     </td>
                                                 </tr>
                                             {% endfor %}
@@ -160,7 +140,7 @@
                                  <!-- First page arrow -->
                                 {% if page_obj.number|add:'-2' > 1 %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page=1">
+                                        <a href="{% relative_url 1 'page' request.GET.urlencode %}">
                                             <svg width="100%"
                                                  height="100%"
                                                  fill="none"
@@ -179,7 +159,7 @@
                                 <!-- Previous pages three dots -->
                                 {% if page_obj.number|add:'-3' > 1 %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page={{ page_obj.number|add:'-3' }}">
+                                        <a href="{% relative_url page_obj.number|add:'-3' 'page' request.GET.urlencode %}">
                                             <svg width="16"
                                                  height="16"
                                                  fill="currentColor"
@@ -205,7 +185,7 @@
                                     <!-- Surrounding pages -->
                                     {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
                                         <div class="w-12 md:flex justify-center items-center hidden cursor-pointer leading-5 transition duration-150 ease-in rounded-full transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                            <a href="?page={{ i }}">
+                                            <a href="{% relative_url i 'page' request.GET.urlencode %}">
                                                 {{ i }}
                                             </a>
                                         </div>
@@ -219,7 +199,7 @@
                                 <!-- Next pages three dots -->
                                 {% if page_obj.paginator.num_pages > page_obj.number|add:'3' %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page={{ page_obj.number|add:'3' }}">
+                                        <a href="{% relative_url page_obj.number|add:'3' 'page' request.GET.urlencode %}">
                                             <svg width="16"
                                                  height="16"
                                                  fill="currentColor"
@@ -234,7 +214,7 @@
                                 <!-- Last page arrow -->
                                 {% if page_obj.paginator.num_pages > page_obj.number|add:'2' %}
                                     <div class="h-12 w-12 flex justify-center items-center rounded-full bg-gray-200 cursor-pointer transform hover:bg-indigo-500 hover:text-white hover:scale-105">
-                                        <a href="?page={{ page_obj.paginator.num_pages }}">
+                                        <a href="{% relative_url page_obj.paginator.num_pages 'page' request.GET.urlencode %}">
                                             <svg width="100%"
                                                  height="100%"
                                                  fill="none"
@@ -253,16 +233,11 @@
 
                         </div>
                     </div>
-
                 {% endif %}
 
-                <!-- Update data -->
-                <div class="flex justify-center mx-auto mt-5 mb-4">
-                    <a href="{% url 'subjects:session_update_data_questionnaire' session.subject.code session.session_number %}"
-                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
-                        Update
-                    </a>
-                    <a href="{% url 'subjects:import_questionnaire_data' session.subject.code session.session_number %}"
+                <!-- Upload data -->
+                <div class="flex justify-center mx-auto mt-6 mb-4">
+                    <a href="{% url 'subjects:session_update_data_handwriting' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
                         <svg xmlns="http://www.w3.org/2000/svg"
                              class="h-5 w-5 mr-1"
@@ -272,7 +247,7 @@
                         </svg>
                         Import
                     </a>
-                    <a href="{% url 'subjects:export_questionnaire_data' session.subject.code session.session_number %}"
+                    <a href="{% url 'subjects:export_handwriting_data' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
                         <svg xmlns="http://www.w3.org/2000/svg"
                              class="h-5 w-5 mr-1"
@@ -286,19 +261,15 @@
 
             {% else %}
 
-                <!-- Create data information -->
+                <!-- Upload data information -->
                 <div class="flex flex-col text-center w-full mt-5 mb-4 text-gray-700">
                     <p class="font-medium">There are no data so far</p>
                 </div>
 
-                <!-- Create data -->
+                <!-- Upload data -->
                 <div class="flex justify-center mx-auto">
-                    <a href="{% url 'subjects:session_create_data_questionnaire' session.subject.code session.session_number %}"
+                    <a href="{% url 'subjects:session_update_data_handwriting' session.subject.code session.session_number %}"
                        class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 focus:outline-none hover:bg-indigo-600 rounded">
-                        Fill manually
-                    </a>
-                    <a href="{% url 'subjects:import_questionnaire_data' session.subject.code session.session_number %}"
-                       class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
                         <svg xmlns="http://www.w3.org/2000/svg"
                              class="h-5 w-5 mr-1"
                              viewBox="0 0 20 20"

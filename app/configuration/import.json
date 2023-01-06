@@ -1,0 +1,24 @@
+{
+  "skip_rows": 1,
+  "index_column": 0,
+  "identity_sheet": "Identity",
+  "feature_sheets": [
+    "VUT_acoustics",
+    "VUT_actigraphy",
+    "VUT_handwriting",
+    "Psychology",
+    "scales_logo_TCS",
+    "CEI_results"
+  ],
+  "feature_sheets_mapping": {
+    "VUT_acoustics": "acoustic",
+    "VUT_actigraphy": "actigraphy",
+    "VUT_handwriting": "handwriting",
+    "Psychology": "psychology",
+    "scales_logo_TCS": "tcs",
+    "CEI_results": "cei"
+  },
+  "before_sessions": ["[B1]", "[B2]"],
+  "normal_sessions": ["[1]", "[2]", "[3]", "[4]", "[5]", "[6]", "[7]", "[8]", "[9]", "[10]"],
+  "date_of_examination": "Date of examination"
+}

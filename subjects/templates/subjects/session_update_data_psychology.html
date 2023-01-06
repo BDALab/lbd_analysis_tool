@@ -5,10 +5,10 @@
 
     <div class="max-w-lg mx-auto">
 
-        <!-- Upload questionnaire data information/header -->
+        <!-- Upload new psychology data information/header -->
         <div class="text-center mt-24">
 
-            <!-- Upload questionnaire data information -->
+            <!-- Upload new psychology data information -->
             <h2 class="text-4xl tracking-tight">
                 Upload data
             </h2>
@@ -17,7 +17,7 @@
             <div class="mt-2">
                 <span class="text-sm">
                     or go back to the
-                    <a href="{% url 'subjects:session_detail_data_acoustic' session.subject.code session.session_number %}"
+                    <a href="{% url 'subjects:session_detail_data_psychology' session.subject.code session.session_number %}"
                        class="text-indigo-500">
                         examination session
                     </a>
@@ -25,7 +25,7 @@
             </div>
         </div>
 
-        <!-- Upload questionnaire data -->
+        <!-- Upload psychology data -->
         <form method="post" class="mt-5 mb-10" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form|crispy }}

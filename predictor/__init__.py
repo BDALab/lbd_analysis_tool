@@ -85,30 +85,31 @@ def predict_lbd_probability(user, data, model):
     :rtype: float
     """
 
-    # Prepare the LBD predictor using the provided user instance
-    predictor = LBDPredictorApiClient(user)
-
-    # Check and validate the sign-up of the user
-    if not user.predictor_registered:
-        if not sign_up_predictor_user(predictor=predictor):
-            return None
-
-    # Check if the user is logged-in already and if not, call the log-in
-    if not user.predictor_access_token:
-        if not log_in_predictor_user(predictor=predictor):
-            return None
-
-    # Validate if there are data to be used for the prediction
-    labels, values = data
-    if values.size == 0:
-        return None
-
-    # Predict the LBD probability via the LBD predictor using the provided data and model identifier
-    response, status_code = predictor.predict_proba(data=data, model=model)
-
-    # Get the LBD probability
-    probability = response.get('predicted')
-    probability = round(float(probability[0, 1]) * 100, 2) if probability is not None else None
+    # # Prepare the LBD predictor using the provided user instance
+    # predictor = LBDPredictorApiClient(user)
+    #
+    # # Check and validate the sign-up of the user
+    # if not user.predictor_registered:
+    #     if not sign_up_predictor_user(predictor=predictor):
+    #         return None
+    #
+    # # Check if the user is logged-in already and if not, call the log-in
+    # if not user.predictor_access_token:
+    #     if not log_in_predictor_user(predictor=predictor):
+    #         return None
+    #
+    # # Validate if there are data to be used for the prediction
+    # labels, values = data
+    # if values.size == 0:
+    #     return None
+    #
+    # # Predict the LBD probability via the LBD predictor using the provided data and model identifier
+    # response, status_code = predictor.predict_proba(data=data, model=model)
+    #
+    # # Get the LBD probability
+    # probability = response.get('predicted')
+    # probability = round(float(probability[0, 1]) * 100, 2) if probability is not None else None
+    probability = None
 
     # Return the predicted LBD probability
     return probability
