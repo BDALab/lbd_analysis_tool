@@ -6,7 +6,9 @@ import dateutil.parser as date_parser
 
 def parse_sex(element):
     """Parses the sex while supporting multiple types and formats"""
-    return str(element) if element else None
+    sex = str(element) if element else None
+    sex = sex if (isinstance(sex, str) and sex != 'nan') else None
+    return sex
 
 
 def parse_year(element):
