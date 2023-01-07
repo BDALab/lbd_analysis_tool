@@ -163,7 +163,7 @@ class Subject(models.Model):
                 feature_labels += label
 
         # Return the labels and features for prediction
-        return feature_labels, numpy.array(feature_values, dtype=numpy.float)
+        return feature_labels, numpy.array(feature_values, dtype=float)
 
     @staticmethod
     def get_subjects(organization, order_by=()):
@@ -294,7 +294,7 @@ class ExaminationSession(models.Model):
             feature_labels += labels
 
         # Return the labels and features for prediction
-        return feature_labels, numpy.array(feature_values, dtype=numpy.float)
+        return feature_labels, numpy.array(feature_values, dtype=float)
 
     @staticmethod
     def get_sessions(subject, order_by=()):
