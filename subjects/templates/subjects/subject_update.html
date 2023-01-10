@@ -13,16 +13,6 @@
                 Update the subject
             </h2>
 
-            <!-- Go to the list of subjects -->
-            <div class="mt-2">
-                <span class="text-sm">
-                    or go back to the
-                    <a href="{% url 'subjects:subject_list' %}"
-                       class="text-indigo-500">
-                        list of subjects
-                    </a>
-                </span>
-            </div>
         </div>
 
         <!-- Update the subject -->
@@ -36,12 +26,18 @@
         </form>
 
         <!-- Delete the subject -->
-        <div class="flex text-center mt-2 mb-10">
+        <div class="flex text-center mt-2 mb-4">
             <a href="{% url 'subjects:subject_delete' subject.code %}"
                class="w-full text-white bg-red-500 hover:bg-red-600 px-3 py-2 rounded-md mt-2">
                 Delete
             </a>
         </div>
+
+        <!-- Go back -->
+        <a href="{% url 'subjects:subject_list' %}"
+           class="inline-flex w-full justify-center mx-auto text-white bg-gray-500 border-0 py-2 px-3 focus:outline-none hover:bg-gray-600 hover:text-white rounded">
+            Go back
+        </a>
     </div>
 
 {% endblock content %}

@@ -13,20 +13,10 @@
                 Upload data
             </h2>
 
-            <!-- Go to the session detail -->
-            <div class="mt-2">
-                <span class="text-sm">
-                    or go back to the
-                    <a href="{% url 'subjects:session_detail_data_acoustic' session.subject.code session.session_number %}"
-                       class="text-indigo-500">
-                        examination session
-                    </a>
-                </span>
-            </div>
         </div>
 
         <!-- Upload acoustic data -->
-        <form method="post" class="mt-5 mb-10" enctype="multipart/form-data">
+        <form method="post" class="mt-5 mb-4" enctype="multipart/form-data">
             {% csrf_token %}
             {{ form|crispy }}
             <button type="submit"
@@ -34,6 +24,12 @@
                 Upload
             </button>
         </form>
+
+        <!-- Go back -->
+        <a href="{% url 'subjects:session_detail' session.subject.code session.session_number %}"
+           class="inline-flex w-full justify-center mx-auto text-white bg-gray-500 border-0 py-2 px-3 focus:outline-none hover:bg-gray-600 hover:text-white rounded">
+            Go back
+        </a>
     </div>
 
 {% endblock content %}

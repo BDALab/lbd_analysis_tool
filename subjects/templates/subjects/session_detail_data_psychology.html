@@ -11,18 +11,6 @@
                 <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
                     Psychology data
                 </h1>
-
-                <!-- Go to the session detail -->
-                <div class="mt-2">
-                    <span class="text-sm">
-                        go back to the
-                        <a href="{% url 'subjects:session_detail' session.subject.code session.session_number %}"
-                           class="text-indigo-500">
-                            session detail
-                        </a>
-                    </span>
-                </div>
-
             </div>
 
             <!-- If there are any loaded psychology data, show the table -->
@@ -257,6 +245,10 @@
                         </svg>
                         Export
                     </a>
+                    <a href="{% url 'subjects:session_detail' session.subject.code session.session_number %}"
+                       class="inline-flex text-white bg-gray-500 border-0 mx-1 py-2 px-3 focus:outline-none hover:bg-gray-600 hover:text-white rounded">
+                        Go back
+                    </a>
                 </div>
 
             {% else %}
@@ -277,6 +269,10 @@
                             <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" />
                         </svg>
                         Import
+                    </a>
+                    <a href="{% url 'subjects:session_detail' session.subject.code session.session_number %}"
+                       class="inline-flex text-white bg-gray-500 border-0 mx-1 py-2 px-3 focus:outline-none hover:bg-gray-600 hover:text-white rounded">
+                        Go back
                     </a>
                 </div>
             {% endif %}

@@ -13,20 +13,10 @@
                 Create a new subject
             </h2>
 
-            <!-- Go to the list of subjects -->
-            <div class="mt-2">
-                <span class="text-sm">
-                    or go back to the
-                    <a href="{% url 'subjects:subject_list' %}"
-                       class="text-indigo-500">
-                        list of subjects
-                    </a>
-                </span>
-            </div>
         </div>
 
         <!-- Create a new subject -->
-        <form method="post" class="mt-5 mb-10">
+        <form method="post" class="mt-5 mb-4">
             {% csrf_token %}
             {{ form|crispy }}
             <button type="submit"
@@ -34,6 +24,12 @@
                 Create
             </button>
         </form>
+
+        <!-- Go back -->
+        <a href="{% url 'subjects:subject_list' %}"
+           class="inline-flex w-full justify-center mx-auto text-white bg-gray-500 border-0 py-2 px-3 focus:outline-none hover:bg-gray-600 hover:text-white rounded">
+            Go back
+        </a>
     </div>
 
 {% endblock content %}
