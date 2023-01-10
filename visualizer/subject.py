@@ -14,7 +14,7 @@ def get_visualization_of_evolution_of_predictions(request, subject):
             'examination session': s.session_number,
             'preDLB probability': ExaminationSessionLBDPredictor.predict_lbd_probability(request.user, s)
         }
-        for s in ExaminationSession.objects.filter(subject=subject.object)
+        for s in ExaminationSession.objects.filter(subject=subject)
     ]
 
     # Prepare the graph
