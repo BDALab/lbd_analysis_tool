@@ -14,15 +14,54 @@
                 <!-- Probability of LBD -->
                 {% if prediction %}
                     <div class="flex flex-col text-center w-full mb-10">
-                        <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
-                            Probability of LBD {{ prediction }}
-                        </h1>
+                        {% if prediction < 10 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-green-500 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 20 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full 300 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 30 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full 200 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 40 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-yellow-100 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 50 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-yellow-200 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 60 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-yellow-300 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 70 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-red-100 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 80 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-red-200 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 90 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-red-300 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% elif prediction < 100 %}
+                            <h1 class="sm:text-3xl text-2xl font-medium title-font rounded-full bg-red-400 text-gray-900 py-2">
+                                Probability of LBD {{ prediction }}
+                            </h1>
+                        {% endif %}
+
                     </div>
                 {% endif %}
 
                 <!-- Examination sessions information -->
                 <div class="flex flex-col text-center w-full mb-5">
-                    <h1 class="sm:text-3xl text-2xl font-medium title-font text-gray-900">
+                    <h1 class="sm:text-2xl text-2xl font-medium title-font text-gray-900">
                         Examination sessions
                     </h1>
 
