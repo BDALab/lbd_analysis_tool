@@ -173,9 +173,15 @@
                                                 </div>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
-                                                <div class="text-sm text-gray-900">
-                                                    Acquired {{ subject.num_sessions }} examination session(s)
-                                                </div>
+                                                {% if subject.num_sessions > 1 %}
+                                                    <div class="text-sm text-gray-900">
+                                                        Acquired {{ subject.num_sessions }} examination sessions
+                                                    </div>
+                                                {% else %}
+                                                    <div class="text-sm text-gray-900">
+                                                        Acquired {{ subject.num_sessions }} examination session
+                                                    </div>
+                                                {% endif %}
                                                 {% if subject.last_examined_on is not none %}
                                                     <div class="text-sm text-gray-500">
                                                         latest {{ subject.last_examined_on|naturaltime }}
