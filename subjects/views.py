@@ -7,7 +7,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.auth.views import LoginView
 from django.views import generic
 from django.urls import reverse_lazy
-from visualizer.subject import get_visualization_of_evolution_of_predictions
+from visualizer.subject import visualize_evolution_of_predictions
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
 from .models_io import export_data
@@ -198,7 +198,7 @@ class SubjectDetailView(LoginRequiredMixin, generic.DetailView):
                 context.update({'prediction': lbd_probability})
 
         # Add the visualization of the predicted LBD probability to the context
-        context.update({'plot_div': get_visualization_of_evolution_of_predictions(self.request.user, self.object)})
+        context.update({'plot_div': visualize_evolution_of_predictions(self.request.user, self.object)})
 
         # Return the updated context
         return context

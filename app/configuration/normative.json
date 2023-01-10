@@ -1,0 +1,647 @@
+{
+  "data": {
+    "subject": {
+      "features_norms": {
+        "year_of_birth":  {
+          "mean": null,
+          "std": null
+        },
+        "sex": {
+          "mean": null,
+          "std": null
+        }
+      }
+    },
+    "session": {
+      "acoustic": {
+        "features_norms": {
+          "Inappropriate silences (diagnosis)": {
+            "mode": null
+          },
+          "Overal diagnosis": {
+            "mode": null
+          },
+          "Unnatural speech rate": {
+            "mean": null,
+            "std": null
+          },
+          "Monopitch": {
+            "mean": null,
+            "std": null
+          },
+          "Airflow insufficiency": {
+            "mean": null,
+            "std": null
+          },
+          "Harsh voice (diagnosis)": {
+            "mode": null
+          },
+          "Acceleration of diadochokinetic pace (diagnosis)": {
+            "mode": null
+          },
+          "Slow alternating motion rate": {
+            "mean": null,
+            "std": null
+          },
+          "Airflow insufficiency (diagnosis)": {
+            "mode": null
+          },
+          "Acceleration of diadochokinetic pace": {
+            "mean": null,
+            "std": null
+          },
+          "No. of disorders": {
+            "mean": null,
+            "std": null
+          },
+          "Longer duration of silences (diagnosis)": {
+            "mode": null
+          },
+          "Harsh voice": {
+            "mean": null,
+            "std": null
+          },
+          "Longer duration of silences": {
+            "mean": null,
+            "std": null
+          },
+          "Monoloudness": {
+            "mean": null,
+            "std": null
+          },
+          "Unstable mean loudness": {
+            "mean": null,
+            "std": null
+          },
+          "Slow alternating motion rate (diagnosis)": {
+            "mode": null
+          },
+          "HDI": {
+            "mean": null,
+            "std": null
+          },
+          "Monoloudness (diagnosis)": {
+            "mode": null
+          },
+          "Inappropriate silences": {
+            "mean": null,
+            "std": null
+          },
+          "Unnatural speech rate (diagnosis)": {
+            "mode": null
+          },
+          "Monopitch (diagnosis)": {
+            "mode": null
+          },
+          "Unstable mean loudness (diagnosis)": {
+            "mode": null
+          }
+        }
+      },
+      "actigraphy": {
+        "features_norms": {
+          "Wake after sleep offset (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Awakening > 5 minutes (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Awakening > 5 minutes - norm (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake after sleep onset - norm (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Total sleep time (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake after sleep onset (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Time in bed (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep onset latency - norm (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Awakening > 5 minutes - norm (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep onset latency (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake after sleep onset - norm (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Time in bed (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Awakening > 5 minutes (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake bouts (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep fragmentation (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep efficiency (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep fragmentation (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake after sleep offset (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Total sleep time (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake after sleep onset (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep efficiency - norm (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep onset latency - norm (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep onset latency (diary)": {
+            "mean": null,
+            "std": null
+          },
+          "Wake bouts (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep efficiency - norm (actigraphy)": {
+            "mean": null,
+            "std": null
+          },
+          "Sleep efficiency (diary)": {
+            "mean": null,
+            "std": null
+          }
+        }
+      },
+      "handwriting": {
+        "features_norms": {
+          "Archimedean spiral (TSK7)_1_non-parametric coefficient of variation of pressure": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_spiral precision index": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_non-parametric coefficient of variation of pressure": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_Duration of writing (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_zero-crossing rate of spiral": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of shannon entropy (vertical in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_median of shannon entropy (horizontal in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of shannon entropy (horizontal in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_Number of interruptions": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of horizontal velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of shannon entropy (global in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_relative number of changes in the velocity profile": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_relative number of changes in the velocity profile": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_relative number of inter-stroke intersections": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_second-order smoothness of spiral": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_second-order zero-crossing rate of spiral": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_first-order smoothness of spiral": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_slope of duration of stroke (in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_tempo (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of pressure": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_tightness of spiral": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_95th percentile of vertical velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_median of shannon entropy (global in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_95th percentile of horizontal velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_mean drawing speed of spiral": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_tempo (in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_Duration of writing": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_slope of vertical velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of vertical velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_tempo (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_median of shannon entropy (vertical in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_Number of interruptions": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_Ratio of on-surface/in-air duration": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_degree of spiral drawing severity": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_slope of horizontal velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_95th percentile of velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_number of inter-stroke intersections": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_slope of velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_variability of spiral width": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_Duration of writing (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_median of velocity (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_slope of duration of stroke (on-surface)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_non-parametric coefficient of variation of altitude": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_number of pen stops": {
+            "mean": null,
+            "std": null
+          },
+          "pentagons (TSK8)_1_Duration of writing (in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_Duration of writing (in-air)": {
+            "mean": null,
+            "std": null
+          },
+          "Archimedean spiral (TSK7)_1_number of pen stops": {
+            "mean": null,
+            "std": null
+          },
+          "short sentence (TSK5)_1_Duration of writing": {
+            "mean": null,
+            "std": null
+          }
+        }
+      },
+      "psychology": {
+        "features_norms": {
+          "Razeni_obrazku_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Verf_sem_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Vizuospacialni_funkce_Z": {
+            "mean": null,
+            "std": null
+          },
+          "JLO_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Delka_vzdelani": {
+            "mean": null,
+            "std": null
+          },
+          "PVLT_shdelayd_Z": {
+            "mean": null,
+            "std": null
+          },
+          "PVLT_shdelayd_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Verf_sem_HS": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_1_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Premorbidni_Inteligence_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Verf_Lex_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Slovnik_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Pozornost_tempo_Z": {
+            "mean": null,
+            "std": null
+          },
+          "JLO_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Vzdelani": {
+            "mode": null
+          },
+          "CRT_Z": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_2_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Pamet_Z": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_del_Z": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_2_Z": {
+            "mean": null,
+            "std": null
+          },
+          "CRT_S.O.": {
+            "mean": null,
+            "std": null
+          },
+          "Symboly_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Symboly_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Verf_Lex_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Slovnik_Z": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_del_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Exekutivni_funkce_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Razeni_pism_cis_Z": {
+            "mean": null,
+            "std": null
+          },
+          "Razeni_pism_cis_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Razeni_obrazku_HS": {
+            "mean": null,
+            "std": null
+          },
+          "PVLT_londelayd_Z": {
+            "mean": null,
+            "std": null
+          },
+          "PVLT_londelayd_HS": {
+            "mean": null,
+            "std": null
+          },
+          "Verf_celk_Z": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_rekog_HS": {
+            "mean": null,
+            "std": null
+          },
+          "PVLT_imm_Z": {
+            "mean": null,
+            "std": null
+          },
+          "BVMT_1_Z": {
+            "mean": null,
+            "std": null
+          },
+          "PVLT_imm_HS": {
+            "mean": null,
+            "std": null
+          }
+        }
+      },
+      "tcs": {
+        "features_norms": {
+          "GDS > 9": {
+            "mean": null,
+            "std": null
+          },
+          "ESS > 10": {
+            "mean": null,
+            "std": null
+          },
+          "NPI ≥ 1": {
+            "mean": null,
+            "std": null
+          },
+          "LeSCoD": {
+            "mean": null,
+            "std": null
+          },
+          "UPDRS > 3": {
+            "mean": null,
+            "std": null
+          },
+          "MOCA ≤ 25": {
+            "mean": null,
+            "std": null
+          },
+          "3F Test - Total": {
+            "mean": null,
+            "std": null
+          },
+          "3F Test - Phonorespiration": {
+            "mean": null,
+            "std": null
+          },
+          "3F Test - Faciokinesis": {
+            "mean": null,
+            "std": null
+          },
+          "Mayo fluct. ≥ 3": {
+            "mean": null,
+            "std": null
+          },
+          "RBDq ≥ 5": {
+            "mean": null,
+            "std": null
+          },
+          "3F Test - Phonetics": {
+            "mean": null,
+            "std": null
+          }
+        }
+      },
+      "cei": {
+        "features_norms": {
+          "DKI MK WM skeleton": {
+            "mean": null,
+            "std": null
+          },
+          "EEG alpha median": {
+            "mean": null,
+            "std": null
+          },
+          "portion of trials below 8Hz": {
+            "mean": null,
+            "std": null
+          },
+          "EEG alpha variability": {
+            "mean": null,
+            "std": null
+          },
+          "EEG alpha mean": {
+            "mean": null,
+            "std": null
+          },
+          "EEG alpha min": {
+            "mean": null,
+            "std": null
+          },
+          "DKI MD WM skeleton": {
+            "mean": null,
+            "std": null
+          },
+          "DKI FA WM skeleton": {
+            "mean": null,
+            "std": null
+          }
+        }
+      }
+    }
+  }
+}
+

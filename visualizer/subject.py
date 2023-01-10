@@ -5,7 +5,7 @@ from subjects.models import ExaminationSession
 from subjects.views_predictors import ExaminationSessionLBDPredictor
 
 
-def get_visualization_of_evolution_of_predictions(user, subject):
+def visualize_evolution_of_predictions(user, subject):
     """Gets the visualization of the evolution of preDLB of a subject"""
 
     # Prepare the predicted probabilities (per session)
