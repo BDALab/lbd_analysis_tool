@@ -5,14 +5,14 @@ from subjects.models import ExaminationSession
 from subjects.views_predictors import ExaminationSessionLBDPredictor
 
 
-def get_visualization_of_evolution_of_predictions(request, subject):
+def get_visualization_of_evolution_of_predictions(user, subject):
     """Gets the visualization of the evolution of preDLB of a subject"""
 
     # Prepare the predicted probabilities (per session)
     probabilities = [
         {
             'examination session': s.session_number,
-            'preDLB probability': ExaminationSessionLBDPredictor.predict_lbd_probability(request.user, s)
+            'preDLB probability': ExaminationSessionLBDPredictor.predict_lbd_probability(user, s)
         }
         for s in ExaminationSession.objects.filter(subject=subject)
     ]
