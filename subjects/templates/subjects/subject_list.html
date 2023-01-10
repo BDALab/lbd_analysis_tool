@@ -186,6 +186,10 @@
                                                     <div class="text-sm text-gray-500">
                                                         latest: {{ subject.last_examined_on|naturaltime }}
                                                     </div>
+                                                {% else %}
+                                                    <div class="text-sm text-gray-500">
+                                                        latest: unknown
+                                                    </div>
                                                 {% endif %}
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap">
