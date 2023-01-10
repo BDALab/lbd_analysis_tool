@@ -1,5 +1,45 @@
 from http import HTTPStatus
-from predictor.client import LBDPredictorApiClient
+from django.conf import settings
+from predictor.client import LBDPredictorApiClient, LBDPredictorLocalClient
+
+
+def predict_lbd_probability(user, data, model):
+    """
+    Predicts the LBD probability via the Predictor API.
+
+    :param user: user model instance
+    :type user: User instance
+    :param data: data to be used for the prediction
+    :type data: data supported by the API
+    :param model: model identifier to be used
+    :type model: str
+    :return: predicted LBD probability
+    :rtype: float
+    """
+
+    # Prepare the LBD predictor using the provided user instance
+    if getattr(settings, 'PREDICTOR_CONFIGURATION', {}).get('use_api_predictor', False) is True:
+        predictor = LBDPredictorApiClient(user)
+    else:
+        predictor = LBDPredictorLocalClient()
+
+    # Validate if there are data to be used for the prediction
+    labels, values = data
+    if values.size == 0:
+        return None
+
+    # Predict the LBD probability via the LBD predictor using the provided data and model identifier
+    response, status_code = predictor.predict_proba(data=data, model=model)
+
+    # Get the LBD probability
+    if status_code == HTTPStatus.OK:
+        probability = response.get('predicted') if response else None
+        probability = round(float(probability[0, 1]) * 100, 2) if probability is not None else None
+    else:
+        probability = None
+
+    # Return the predicted LBD probability
+    return probability
 
 
 def sign_up_predictor_user(user=None, predictor=None):
@@ -69,47 +109,3 @@ def refresh_access_token(user=None, predictor=None):
 
     # Return the information about the access token refresh
     return True if status_code == HTTPStatus.OK else False
-
-
-def predict_lbd_probability(user, data, model):
-    """
-    Predicts the LBD probability via the Predictor API.
-
-    :param user: user model instance
-    :type user: User instance
-    :param data: data to be used for the prediction
-    :type data: data supported by the API
-    :param model: model identifier to be used
-    :type model: str
-    :return: predicted LBD probability
-    :rtype: float
-    """
-
-    # # Prepare the LBD predictor using the provided user instance
-    # predictor = LBDPredictorApiClient(user)
-    #
-    # # Check and validate the sign-up of the user
-    # if not user.predictor_registered:
-    #     if not sign_up_predictor_user(predictor=predictor):
-    #         return None
-    #
-    # # Check if the user is logged-in already and if not, call the log-in
-    # if not user.predictor_access_token:
-    #     if not log_in_predictor_user(predictor=predictor):
-    #         return None
-    #
-    # # Validate if there are data to be used for the prediction
-    # labels, values = data
-    # if values.size == 0:
-    #     return None
-    #
-    # # Predict the LBD probability via the LBD predictor using the provided data and model identifier
-    # response, status_code = predictor.predict_proba(data=data, model=model)
-    #
-    # # Get the LBD probability
-    # probability = response.get('predicted')
-    # probability = round(float(probability[0, 1]) * 100, 2) if probability is not None else None
-    probability = None
-
-    # Return the predicted LBD probability
-    return probability

@@ -1,4 +1,5 @@
 from predictor import sign_up_predictor_user
+from django.conf import settings
 from django.core.cache import cache
 
 
@@ -26,7 +27,8 @@ def prepare_predictor_api_for_created_user(sender, instance, created, **kwargs):
         instance.predictor_password = instance.generate_predictor_password()
 
         # Sign-up the user in the predictor API
-        sign_up_predictor_user(user=instance)
+        if getattr(settings, 'PREDICTOR_CONFIGURATION', {}).get('use_api_predictor', False) is True:
+            sign_up_predictor_user(user=instance)
 
         # Save the updated instance
         instance.save()

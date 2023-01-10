@@ -1,5 +1,6 @@
 {
   "model_identifier": "dummy_predictor",
+  "use_api_predictor": false,
   "host": "http://127.0.0.1",
   "port": "500",
   "verify": true,

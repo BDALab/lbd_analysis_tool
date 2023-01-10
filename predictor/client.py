@@ -1,6 +1,82 @@
+import os
+import pickle
 from http import HTTPStatus
 from django.conf import settings
 from predictor_api_client import PredictorApiClient
+
+
+# File path
+this_path = os.path.dirname(os.path.abspath(__file__))
+
+
+class LBDPredictorLocalClient(object):
+    """Class implementing the LBD Predictor local client"""
+
+    # Define the predictor settings
+    model_storage = 'models'
+
+    # TODO: use when real model(s) is(/are) serialized
+    # @classmethod
+    # def _prepare(cls, model):
+    #     with open(os.path.join(this_path, cls.model_storage, f'{model}.pkl'), 'rb') as f:
+    #         return pickle.load(f)
+
+    @classmethod
+    def _prepare(cls, model):
+        from predictor.dummy import DummyPredictor
+        return DummyPredictor()
+
+    def predict(self, data, model):
+        """
+        Predicts the LBD class via the local predictor.
+
+        :param data: data to be used for the prediction
+        :type data: data supported by the predictor
+        :param model: model identifier to be used
+        :type model: str
+        :return: (data/error_info, status_code)
+        :rtype: tuple
+        """
+
+        # Prepare the prediction
+        predictor = self._prepare(model)
+
+        # Get feature labels and values
+        feature_labels, feature_values = data
+
+        # Run the predictor
+        try:
+            predicted = predictor.predict(feature_values)
+        except Exception as e:
+            return None, HTTPStatus.INTERNAL_SERVER_ERROR
+        else:
+            return {'predicted': predicted}, HTTPStatus.OK
+
+    def predict_proba(self, data, model):
+        """
+        Predicts the LBD probability via the local predictor.
+
+        :param data: data to be used for the prediction
+        :type data: data supported by the predictor
+        :param model: model identifier to be used
+        :type model: str
+        :return: (data/error_info, status_code)
+        :rtype: tuple
+        """
+
+        # Prepare the prediction
+        predictor = self._prepare(model)
+
+        # Get feature labels and values
+        feature_labels, feature_values = data
+
+        # Run the predictor
+        try:
+            predicted = predictor.predict_proba(feature_values)
+        except Exception as e:
+            return None, HTTPStatus.INTERNAL_SERVER_ERROR
+        else:
+            return {'predicted': predicted}, HTTPStatus.OK
 
 
 class LBDPredictorApiClient(object):
@@ -23,6 +99,21 @@ class LBDPredictorApiClient(object):
 
         # Set the user model instance
         self.user = user
+
+    def _prepare(self):
+
+        # Check and validate the sign-up of the user
+        if not self.user.predictor_registered:
+            _, status_code = self.sign_up()
+            return True if status_code == HTTPStatus.OK else False
+
+        # Check if the user is logged-in already and if not, call the log-in
+        if not self.user.predictor_access_token:
+            _, status_code = self.log_in()
+            return True if status_code == HTTPStatus.OK else False
+
+        # Return the default positive response if all is well
+        return True
 
     def sign_up(self):
         """Signs-up a user in the predictor API"""
@@ -79,6 +170,10 @@ class LBDPredictorApiClient(object):
         :rtype: tuple
         """
 
+        # Prepare the prediction
+        if not self._prepare():
+            return None
+
         # Get feature labels and values
         feature_labels, feature_values = data
 
@@ -110,6 +205,10 @@ class LBDPredictorApiClient(object):
         :return: (data/error_info, status_code)
         :rtype: tuple
         """
+
+        # Prepare the prediction
+        if not self._prepare():
+            return None
 
         # Get feature labels and values
         feature_labels, feature_values = data
