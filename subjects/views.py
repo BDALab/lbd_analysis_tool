@@ -390,7 +390,7 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'session'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 15
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
@@ -507,7 +507,7 @@ class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'session'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 15
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
@@ -624,7 +624,7 @@ class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'session'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 15
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
@@ -741,7 +741,7 @@ class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'session'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 15
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
@@ -858,7 +858,7 @@ class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'session'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 15
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
@@ -975,7 +975,7 @@ class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
     context_object_name = 'session'
 
     # Define the pagination
-    paginate_by = 5
+    paginate_by = 15
 
     def get_queryset(self):
         """Gets the queryset to be returned"""

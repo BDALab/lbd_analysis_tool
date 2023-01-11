@@ -385,8 +385,8 @@ class CommonExaminationSessionData(models.Model):
         # Get the supported feature names
         supported_features = cls.CONFIGURATION.get_available_feature_names()
 
-        # Return the features (filter only for the supported ones and handle the data types)
-        return [
+        # Get the features filter only for the supported ones and handle the data types)
+        response = [
             {
                 FeaturesFormatter.FEATURE_LABEL_FIELD: label,
                 FeaturesFormatter.FEATURE_VALUE_FIELD: format_feature_data_type(
@@ -397,6 +397,12 @@ class CommonExaminationSessionData(models.Model):
             for label, value in features
             if label in supported_features
         ]
+
+        # Sort the features by the feature names
+        response = sorted(response, key=lambda x: x[FeaturesFormatter.FEATURE_LABEL_FIELD])
+
+        # Return the features
+        return response
 
     @classmethod
     def get_data(cls, pk=None, examination_session=None, subject_code=None, session_number=None):
