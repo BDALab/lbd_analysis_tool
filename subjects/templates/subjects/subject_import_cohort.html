@@ -27,7 +27,7 @@
 
         <!-- Go back -->
         <a href="{% url 'subjects:subject_list' %}"
-           class="inline-flex w-full justify-center mx-auto bg-gray-100 border-0 py-2 px-3 focus:outline-none hover:bg-gray-200 rounded text-base rounded">
+           class="inline-flex w-full justify-center mx-auto bg-gray-100 border-0 py-2 px-3 focus:outline-none hover:bg-gray-200 rounded text-base">
             <svg fill="none"
                  stroke="currentColor"
                  stroke-linecap="round"
@@ -39,6 +39,17 @@
             </svg>
             Go back
         </a>
+
+        <div id="loading_message">
+        </div>
     </div>
+
+    <script>
+        $(function(){
+            $('form').on('submit', function(e){
+                $('#loading_message').append('<p class="animate-pulse text-md text-white px-3 py-2 bg-indigo-500 justify-center mx-auto text-center mt-4 rounded">Importing subjects, please wait...</p>')
+            });
+        })
+    </script>
 
 {% endblock content %}
