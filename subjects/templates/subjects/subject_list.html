@@ -184,11 +184,11 @@
                                                 {% endif %}
                                                 {% if subject.last_examined_on is not none %}
                                                     <div class="text-sm text-gray-500">
-                                                        latest: {{ subject.last_examined_on|naturaltime }}
+                                                        latest (with date): {{ subject.last_examined_on|naturaltime }}
                                                     </div>
                                                 {% else %}
                                                     <div class="text-sm text-gray-500">
-                                                        latest: unknown
+                                                        latest (with date): unknown
                                                     </div>
                                                 {% endif %}
                                             </td>
