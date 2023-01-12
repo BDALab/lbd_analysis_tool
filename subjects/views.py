@@ -13,6 +13,7 @@ from visualizer.modalities import visualize_most_differentiating_features
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
 from .models_io import export_data
+from .models_utils import rename_feature
 from .models_formatters import FeaturesFormatter
 from .models import (
     Subject,
@@ -413,13 +414,18 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
         else:
             acoustic_data = None
 
-        # Add the acoustic data
-        context.update({'acoustic_data': acoustic_data})
+        # Rename the features
+        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['acoustic']
+        for feature in acoustic_data:
+            feature['label'] = rename_feature(feature['label'], presentation_config)
 
         # Filter the acoustic data and add the filtration into the context
         if acoustic_data and self.request.GET.get('q'):
             acoustic_data = [data for data in acoustic_data if self.request.GET.get('q') in data.get('label')]
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the acoustic data
+        context.update({'acoustic_data': acoustic_data})
 
         # Add the pagination if there are any loaded acoustic data
         if acoustic_data:
@@ -437,7 +443,9 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
         if acoustic_data:
             norm_data = getattr(settings, 'NORM_CONFIGURATION')['acoustic']
             comp_data = FeaturesFormatter(DataAcoustic).prepare_computable(record=original_data)
-            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
+            context.update({
+                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'acoustic')
+            })
 
         # Return the updated context
         return context
@@ -538,13 +546,18 @@ class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
         else:
             actigraphy_data = None
 
-        # Add the acoustic data
-        context.update({'actigraphy_data': actigraphy_data})
+        # Rename the features
+        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['actigraphy']
+        for feature in actigraphy_data:
+            feature['label'] = rename_feature(feature['label'], presentation_config)
 
         # Filter the actigraphy data and add the filtration into the context
         if actigraphy_data and self.request.GET.get('q'):
             actigraphy_data = [data for data in actigraphy_data if self.request.GET.get('q') in data.get('label')]
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the acoustic data
+        context.update({'actigraphy_data': actigraphy_data})
 
         # Add the pagination if there are any loaded actigraphy data
         if actigraphy_data:
@@ -562,7 +575,9 @@ class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
         if actigraphy_data:
             norm_data = getattr(settings, 'NORM_CONFIGURATION')['actigraphy']
             comp_data = FeaturesFormatter(DataActigraphy).prepare_computable(record=original_data)
-            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
+            context.update({
+                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'actigraphy')
+            })
 
         # Return the updated context
         return context
@@ -663,13 +678,18 @@ class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
         else:
             handwriting_data = None
 
-        # Add the handwriting data
-        context.update({'handwriting_data': handwriting_data})
+        # Rename the features
+        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['handwriting']
+        for feature in handwriting_data:
+            feature['label'] = rename_feature(feature['label'], presentation_config)
 
         # Filter the handwriting data and add the filtration into the context
         if handwriting_data and self.request.GET.get('q'):
             handwriting_data = [data for data in handwriting_data if self.request.GET.get('q') in data.get('label')]
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the handwriting data
+        context.update({'handwriting_data': handwriting_data})
 
         # Add the pagination if there are any loaded handwriting data
         if handwriting_data:
@@ -687,7 +707,9 @@ class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
         if handwriting_data:
             norm_data = getattr(settings, 'NORM_CONFIGURATION')['handwriting']
             comp_data = FeaturesFormatter(DataHandwriting).prepare_computable(record=original_data)
-            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
+            context.update({
+                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'handwriting')
+            })
 
         # Return the updated context
         return context
@@ -788,13 +810,18 @@ class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
         else:
             psychology_data = None
 
-        # Add the psychology data
-        context.update({'psychology_data': psychology_data})
+        # Rename the features
+        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['psychology']
+        for feature in psychology_data:
+            feature['label'] = rename_feature(feature['label'], presentation_config)
 
         # Filter the psychology data and add the filtration into the context
         if psychology_data and self.request.GET.get('q'):
             psychology_data = [data for data in psychology_data if self.request.GET.get('q') in data.get('label')]
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the psychology data
+        context.update({'psychology_data': psychology_data})
 
         # Add the pagination if there are any loaded psychology data
         if psychology_data:
@@ -812,7 +839,9 @@ class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
         if psychology_data:
             norm_data = getattr(settings, 'NORM_CONFIGURATION')['psychology']
             comp_data = FeaturesFormatter(DataPsychology).prepare_computable(record=original_data)
-            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
+            context.update({
+                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'psychology')
+            })
 
         # Return the updated context
         return context
@@ -913,13 +942,18 @@ class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
         else:
             tcs_data = None
 
-        # Add the tcs data
-        context.update({'tcs_data': tcs_data})
+        # Rename the features
+        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['tcs']
+        for feature in tcs_data:
+            feature['label'] = rename_feature(feature['label'], presentation_config)
 
         # Filter the tcs data and add the filtration into the context
         if tcs_data and self.request.GET.get('q'):
             tcs_data = [data for data in tcs_data if self.request.GET.get('q') in data.get('label')]
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the tcs data
+        context.update({'tcs_data': tcs_data})
 
         # Add the pagination if there are any loaded tcs data
         if tcs_data:
@@ -937,7 +971,9 @@ class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
         if tcs_data:
             norm_data = getattr(settings, 'NORM_CONFIGURATION')['tcs']
             comp_data = FeaturesFormatter(DataTCS).prepare_computable(record=original_data)
-            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
+            context.update({
+                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'tcs')
+            })
 
         # Return the updated context
         return context
@@ -1038,13 +1074,18 @@ class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
         else:
             cei_data = None
 
-        # Add the cei data
-        context.update({'cei_data': cei_data})
+        # Rename the features
+        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['cei']
+        for feature in cei_data:
+            feature['label'] = rename_feature(feature['label'], presentation_config)
 
         # Filter the cei data and add the filtration into the context
         if cei_data and self.request.GET.get('q'):
             cei_data = [data for data in cei_data if self.request.GET.get('q') in data.get('label')]
             context.update({'q': self.request.GET.get('q')})
+
+        # Add the cei data
+        context.update({'cei_data': cei_data})
 
         # Add the pagination if there are any loaded cei data
         if cei_data:
@@ -1062,7 +1103,9 @@ class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
         if cei_data:
             norm_data = getattr(settings, 'NORM_CONFIGURATION')['cei']
             comp_data = FeaturesFormatter(DataCEI).prepare_computable(record=original_data)
-            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
+            context.update({
+                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'cei')
+            })
 
         # Return the updated context
         return context

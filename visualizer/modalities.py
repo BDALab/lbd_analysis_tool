@@ -2,14 +2,23 @@ import pandas as pd
 import plotly.express as px
 from itertools import chain
 from plotly.offline import plot
+from django.conf import settings
+from subjects.models_utils import rename_feature
 from subjects.models_formatters import FeaturesFormatter
 
 
-def visualize_most_differentiating_features(session_data, norm_data, top_n=10):
+# Presentation settings
+presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']
+
+
+def visualize_most_differentiating_features(session_data, norm_data, modality, top_n=10):
     """Gets the visualization of the most differentiating features of a given modality (ina given session)"""
 
     # Prepare the comparison
     comparison = []
+
+    # Prepare the modality presentation
+    modality_presentation = presentation_config[modality]
 
     # Compute the comparison
     for data in session_data:
@@ -37,12 +46,12 @@ def visualize_most_differentiating_features(session_data, norm_data, top_n=10):
     data = list(chain.from_iterable([
         [
             {
-                'feature label': c['feature'],
+                'feature label': rename_feature(c['feature'], modality_presentation),
                 'feature value': c['norm value'],
                 'type': 'norm'
             },
             {
-                'feature label': c['feature'],
+                'feature label': rename_feature(c['feature'], modality_presentation),
                 'feature value': c['orig value'],
                 'type': 'subject'
             }

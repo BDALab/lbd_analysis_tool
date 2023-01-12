@@ -156,8 +156,11 @@ DATA_CONFIGURATION = load_configuration('data.json')
 # Import settings
 IMPORT_CONFIGURATION = load_configuration('import.json')
 
-# Import settings
+# Norm settings
 NORM_CONFIGURATION = load_configuration('normative.json')
+
+# Presentation settings
+PRESENTATION_CONFIGURATION = load_configuration('presentation.json')
 
 # # Logging settings
 # LOGGING = {
