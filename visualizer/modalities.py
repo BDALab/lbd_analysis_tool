@@ -1,3 +1,4 @@
+import sys
 import pandas as pd
 import plotly.express as px
 from itertools import chain
@@ -30,13 +31,15 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
         orig = orig if orig is not None else None
         norm = norm if norm is not None else None
 
-        if orig is not None and norm is not None:
-            comparison.append({
-                'feature': data[FeaturesFormatter.FEATURE_LABEL_FIELD],
-                'difference': abs(((orig / norm) * 100) - 100),
-                'orig value': orig,
-                'norm value': norm
-            })
+        if (orig is None or norm is None) or (not orig and not norm):
+            continue
+
+        comparison.append({
+            'feature': data[FeaturesFormatter.FEATURE_LABEL_FIELD],
+            'difference': abs(((orig / (norm + sys.float_info.epsilon)) * 100) - 100),
+            'orig value': orig,
+            'norm value': norm
+        })
 
     # Get the most discriminating features
     comparison = list(sorted(comparison, key=lambda x: x['difference'], reverse=True))
