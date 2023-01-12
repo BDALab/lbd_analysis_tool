@@ -33,13 +33,13 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
         if orig is not None and norm is not None:
             comparison.append({
                 'feature': data[FeaturesFormatter.FEATURE_LABEL_FIELD],
-                'difference': orig - norm,
+                'difference': abs(((orig / norm) * 100) - 100),
                 'orig value': orig,
                 'norm value': norm
             })
 
     # Get the most discriminating features
-    comparison = sorted(comparison, key=lambda x: x['difference'], reverse=True)
+    comparison = list(sorted(comparison, key=lambda x: x['difference'], reverse=True))
     comparison = comparison[:top_n] if top_n < len(comparison) else comparison
 
     # Prepare the data to be shown
@@ -48,12 +48,14 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
             {
                 'feature label': rename_feature(c['feature'], modality_presentation),
                 'feature value': c['norm value'],
-                'type': 'norm'
+                'type': 'norm',
+                'difference': c['difference']
             },
             {
                 'feature label': rename_feature(c['feature'], modality_presentation),
                 'feature value': c['orig value'],
-                'type': 'subject'
+                'type': 'subject',
+                'difference': c['difference']
             }
         ]
         for c in comparison
@@ -61,6 +63,9 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
 
     if not data:
         return ''
+
+    # Resort the data once again
+    data = list(sorted(data, key=lambda x: x['difference'], reverse=True))
 
     # Prepare the graph
     fig = px.histogram(
