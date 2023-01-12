@@ -6,12 +6,10 @@ from .configuration import load_configuration
 # set casting, default value
 env = environ.Env(DEBUG=(bool, False))
 
-
 # Read the .env file (development) or read the environment variables directly (production)
 # TODO: Set default as False in production and export the environment variable
 if env.bool('READ_DOT_ENV_FILE', default=True):
     environ.Env.read_env()
-
 
 # TODO: Set to True by default in the DEVEL -> change when going to PROD
 # Get the debug mode setting
@@ -24,11 +22,9 @@ SECRET_KEY = env('SECRET_KEY')
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # TODO: Set to True by default in the DEVEL -> change when going to PROD
 # Set the allowed hosts
 ALLOWED_HOSTS = ['127.0.0.1']
-
 
 # Application definition
 INSTALLED_APPS = [
@@ -48,7 +44,6 @@ INSTALLED_APPS = [
     'subjects'
 ]
 
-
 # Middleware settings
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -60,10 +55,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-
 # URL settings
 ROOT_URLCONF = 'app.urls'
-
 
 # Templates settings
 TEMPLATES = [
@@ -82,10 +75,8 @@ TEMPLATES = [
     },
 ]
 
-
 # WSGI settings
 WSGI_APPLICATION = 'app.wsgi.application'
-
 
 # Database (https://docs.djangoproject.com/en/3.1/ref/settings/#databases)
 DATABASES = {
@@ -99,7 +90,6 @@ DATABASES = {
     }
 }
 
-
 # Cache (https://github.com/jazzband/django-redis)
 CACHES = {
     'default': {
@@ -111,7 +101,6 @@ CACHES = {
     }
 }
 CACHE_TTL = 60 * 60  # 60 minutes
-
 
 # Password validation (https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators)
 AUTH_PASSWORD_VALIDATORS = [
@@ -129,14 +118,12 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization (https://docs.djangoproject.com/en/3.1/topics/i18n/)
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images; https://docs.djangoproject.com/en/3.1/howto/static-files/)
 STATIC_URL = '/static/'
@@ -145,37 +132,32 @@ STATIC_ROOT = 'static_root'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = 'media_root'
 
-
 # Auth settings
 AUTH_USER_MODEL = 'subjects.User'
 
-
 # E-mail settings
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-
 
 # Login/logout settings
 LOGIN_REDIRECT_URL = '/subjects/'
 LOGIN_URL = '/login'
 LOGOUT_REDIRECT_URL = '/'
 
-
 # Crispy forms settings
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'tailwind'
 CRISPY_TEMPLATE_PACK = 'tailwind'
 
-
 # Predictor API settings
 PREDICTOR_CONFIGURATION = load_configuration('predictor.json')
-
 
 # Data settings
 DATA_CONFIGURATION = load_configuration('data.json')
 
-
 # Import settings
 IMPORT_CONFIGURATION = load_configuration('import.json')
 
+# Import settings
+NORM_CONFIGURATION = load_configuration('normative.json')
 
 # # Logging settings
 # LOGGING = {

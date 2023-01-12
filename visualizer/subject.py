@@ -22,7 +22,7 @@ def visualize_evolution_of_predictions(user, subject):
         data_frame=pd.DataFrame(probabilities),
         x='examination session',
         y='preDLB probability',
-        text='preDLB probability',
+        text='preDLB probability'
     )
     fig.update_layout(
         xaxis=dict(
@@ -33,4 +33,4 @@ def visualize_evolution_of_predictions(user, subject):
     )
 
     # Return the prepared graph object (as a DIV element)
-    return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text="")
+    return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text='')

@@ -1,6 +1,7 @@
 import logging
 from django.http import HttpResponseRedirect
 from django.shortcuts import reverse, redirect
+from django.conf import settings
 from django.core.paginator import Paginator
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -8,6 +9,7 @@ from django.contrib.auth.views import LoginView
 from django.views import generic
 from django.urls import reverse_lazy
 from visualizer.subject import visualize_evolution_of_predictions
+from visualizer.modalities import visualize_most_differentiating_features
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
 from .models_io import export_data
@@ -403,11 +405,13 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDataAcousticDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        acoustic_data = DataAcoustic.get_data(examination_session=self.object.id)
+        original_data = DataAcoustic.get_data(examination_session=self.object.id)
 
         # Prepare the acoustic data
-        if acoustic_data:
-            acoustic_data = FeaturesFormatter(DataAcoustic).prepare_presentable(record=acoustic_data)
+        if original_data:
+            acoustic_data = FeaturesFormatter(DataAcoustic).prepare_presentable(record=original_data)
+        else:
+            acoustic_data = None
 
         # Add the acoustic data
         context.update({'acoustic_data': acoustic_data})
@@ -428,6 +432,12 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
+
+        # Add the visualization of the most discriminating features to the context
+        if acoustic_data:
+            norm_data = getattr(settings, 'NORM_CONFIGURATION')['acoustic']
+            comp_data = FeaturesFormatter(DataAcoustic).prepare_computable(record=original_data)
+            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
 
         # Return the updated context
         return context
@@ -520,11 +530,13 @@ class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDataActigraphyDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        actigraphy_data = DataActigraphy.get_data(examination_session=self.object.id)
+        original_data = DataActigraphy.get_data(examination_session=self.object.id)
 
         # Prepare the actigraphy data
-        if actigraphy_data:
-            actigraphy_data = FeaturesFormatter(DataActigraphy).prepare_presentable(record=actigraphy_data)
+        if original_data:
+            actigraphy_data = FeaturesFormatter(DataActigraphy).prepare_presentable(record=original_data)
+        else:
+            actigraphy_data = None
 
         # Add the acoustic data
         context.update({'actigraphy_data': actigraphy_data})
@@ -545,6 +557,12 @@ class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
+
+        # Add the visualization of the most discriminating features to the context
+        if actigraphy_data:
+            norm_data = getattr(settings, 'NORM_CONFIGURATION')['actigraphy']
+            comp_data = FeaturesFormatter(DataActigraphy).prepare_computable(record=original_data)
+            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
 
         # Return the updated context
         return context
@@ -637,11 +655,13 @@ class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDataHandwritingDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        handwriting_data = DataHandwriting.get_data(examination_session=self.object.id)
+        original_data = DataHandwriting.get_data(examination_session=self.object.id)
 
         # Prepare the acoustic data
-        if handwriting_data:
-            handwriting_data = FeaturesFormatter(DataHandwriting).prepare_presentable(record=handwriting_data)
+        if original_data:
+            handwriting_data = FeaturesFormatter(DataHandwriting).prepare_presentable(record=original_data)
+        else:
+            handwriting_data = None
 
         # Add the handwriting data
         context.update({'handwriting_data': handwriting_data})
@@ -662,6 +682,12 @@ class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
+
+        # Add the visualization of the most discriminating features to the context
+        if handwriting_data:
+            norm_data = getattr(settings, 'NORM_CONFIGURATION')['handwriting']
+            comp_data = FeaturesFormatter(DataHandwriting).prepare_computable(record=original_data)
+            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
 
         # Return the updated context
         return context
@@ -754,11 +780,13 @@ class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDataPsychologyDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        psychology_data = DataPsychology.get_data(examination_session=self.object.id)
+        original_data = DataPsychology.get_data(examination_session=self.object.id)
 
         # Prepare the psychology data
-        if psychology_data:
-            psychology_data = FeaturesFormatter(DataPsychology).prepare_presentable(record=psychology_data)
+        if original_data:
+            psychology_data = FeaturesFormatter(DataPsychology).prepare_presentable(record=original_data)
+        else:
+            psychology_data = None
 
         # Add the psychology data
         context.update({'psychology_data': psychology_data})
@@ -779,6 +807,12 @@ class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
+
+        # Add the visualization of the most discriminating features to the context
+        if psychology_data:
+            norm_data = getattr(settings, 'NORM_CONFIGURATION')['psychology']
+            comp_data = FeaturesFormatter(DataPsychology).prepare_computable(record=original_data)
+            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
 
         # Return the updated context
         return context
@@ -871,11 +905,13 @@ class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDataTCSDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        tcs_data = DataTCS.get_data(examination_session=self.object.id)
+        original_data = DataTCS.get_data(examination_session=self.object.id)
 
         # Prepare the tcs data
-        if tcs_data:
-            tcs_data = FeaturesFormatter(DataTCS).prepare_presentable(record=tcs_data)
+        if original_data:
+            tcs_data = FeaturesFormatter(DataTCS).prepare_presentable(record=original_data)
+        else:
+            tcs_data = None
 
         # Add the tcs data
         context.update({'tcs_data': tcs_data})
@@ -896,6 +932,12 @@ class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
+
+        # Add the visualization of the most discriminating features to the context
+        if tcs_data:
+            norm_data = getattr(settings, 'NORM_CONFIGURATION')['tcs']
+            comp_data = FeaturesFormatter(DataTCS).prepare_computable(record=original_data)
+            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
 
         # Return the updated context
         return context
@@ -988,11 +1030,13 @@ class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDataCEIDetailView, self).get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        cei_data = DataCEI.get_data(examination_session=self.object.id)
+        original_data = DataCEI.get_data(examination_session=self.object.id)
 
         # Prepare the cei data
-        if cei_data:
-            cei_data = FeaturesFormatter(DataCEI).prepare_presentable(record=cei_data)
+        if original_data:
+            cei_data = FeaturesFormatter(DataCEI).prepare_presentable(record=original_data)
+        else:
+            cei_data = None
 
         # Add the cei data
         context.update({'cei_data': cei_data})
@@ -1013,6 +1057,12 @@ class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
+
+        # Add the visualization of the most discriminating features to the context
+        if cei_data:
+            norm_data = getattr(settings, 'NORM_CONFIGURATION')['cei']
+            comp_data = FeaturesFormatter(DataCEI).prepare_computable(record=original_data)
+            context.update({'plot_div': visualize_most_differentiating_features(comp_data, norm_data)})
 
         # Return the updated context
         return context
