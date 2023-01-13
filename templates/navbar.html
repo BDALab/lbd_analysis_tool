@@ -33,7 +33,7 @@
 
             {% if request.user.is_authenticated %}
                 <div class="flex inline-flex mt-4 md:mt-0">
-                    Logged in as: {{ request.user.username }}
+                    Logged in as: <b>&nbsp{{ request.user.username }}</b>
                 </div>
 
             {% endif %}
