@@ -487,31 +487,20 @@ class SessionDataDetailViewTemplate(LoginRequiredMixin, generic.DetailView):
         return context
 
 
-class SessionDataAcousticDetailView(SessionDataDetailViewTemplate):
-    """Class implementing session: acoustic data detail view"""
+class SessionDataUpdateViewTemplate(LoginRequiredMixin, generic.CreateView):
+    """Base class for examination session data (update view)"""
 
     # Define the template name
-    template_name = 'subjects/session_detail_data_acoustic.html'
+    template_name = ''
 
-    # Define the modality label
-    modality = 'acoustic'
-    modality_data = 'acoustic_data'
-
-    # Define the model
-    model = DataAcoustic
-
-
-class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
-    """Class implementing session: acoustic data update view"""
-
-    # Define the template name
-    template_name = 'subjects/session_update_data_acoustic.html'
+    # Define the successful redirect URL
+    success_url = ''
 
     # Define the model name
-    model = DataAcoustic
+    model = None
 
     # Define the form class
-    form_class = DataAcousticForm
+    form_class = None
 
     def form_valid(self, form):
         """Form valid hook: sets data's session after created"""
@@ -524,7 +513,7 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
         data.save()
 
         # Return the updated data
-        return super(SessionDataAcousticUpdateView, self).form_valid(form)
+        return super().form_valid(form)
 
     def set_session(self, data):
         """Sets the session for a given data after creating"""
@@ -540,14 +529,14 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
     def get_success_url(self):
         """Returns the success URL"""
         return reverse_lazy(
-            'subjects:session_detail_data_acoustic',
+            self.success_url,
             kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
 
     def get_context_data(self, **kwargs):
         """Enriches the context with additional data"""
 
         # Get the context
-        context = super(SessionDataAcousticUpdateView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
         session = ExaminationSession.get_session(
@@ -559,6 +548,36 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
 
         # Return the updated context
         return context
+
+
+class SessionDataAcousticDetailView(SessionDataDetailViewTemplate):
+    """Class implementing session: acoustic data detail view"""
+
+    # Define the template name
+    template_name = 'subjects/session_detail_data_acoustic.html'
+
+    # Define the modality label
+    modality = 'acoustic'
+    modality_data = 'acoustic_data'
+
+    # Define the model
+    model = DataAcoustic
+
+
+class SessionDataAcousticUpdateView(SessionDataUpdateViewTemplate):
+    """Class implementing session: acoustic data update view"""
+
+    # Define the template name
+    template_name = 'subjects/session_update_data_acoustic.html'
+
+    # Define the successful redirect URL
+    success_url = 'subjects:session_detail_data_acoustic'
+
+    # Define the model name
+    model = DataAcoustic
+
+    # Define the form class
+    form_class = DataAcousticForm
 
 
 class SessionDataActigraphyDetailView(SessionDataDetailViewTemplate):
@@ -575,64 +594,20 @@ class SessionDataActigraphyDetailView(SessionDataDetailViewTemplate):
     model = DataActigraphy
 
 
-class SessionDataActigraphyUpdateView(LoginRequiredMixin, generic.CreateView):
+class SessionDataActigraphyUpdateView(SessionDataUpdateViewTemplate):
     """Class implementing session: actigraphy data update view"""
 
     # Define the template name
     template_name = 'subjects/session_update_data_actigraphy.html'
+
+    # Define the successful redirect URL
+    success_url = 'subjects:session_detail_data_actigraphy'
 
     # Define the model name
     model = DataActigraphy
 
     # Define the form class
     form_class = DataActigraphyForm
-
-    def form_valid(self, form):
-        """Form valid hook: sets data's session after created"""
-
-        # Save the form without database update
-        data = form.save(commit=False)
-
-        # Update the session and update the database records
-        data = self.set_session(data)
-        data.save()
-
-        # Return the updated data
-        return super(SessionDataActigraphyUpdateView, self).form_valid(form)
-
-    def set_session(self, data):
-        """Sets the session for a given data after creating"""
-
-        # Update the examination session
-        data.examination_session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Return the updated data
-        return data
-
-    def get_success_url(self):
-        """Returns the success URL"""
-        return reverse_lazy(
-            'subjects:session_detail_data_actigraphy',
-            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataActigraphyUpdateView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Add the examination session
-        context.update({'session': session})
-
-        # Return the updated context
-        return context
 
 
 class SessionDataHandwritingDetailView(SessionDataDetailViewTemplate):
@@ -649,64 +624,20 @@ class SessionDataHandwritingDetailView(SessionDataDetailViewTemplate):
     model = DataHandwriting
 
 
-class SessionDataHandwritingUpdateView(LoginRequiredMixin, generic.CreateView):
+class SessionDataHandwritingUpdateView(SessionDataUpdateViewTemplate):
     """Class implementing session: handwriting data update view"""
 
     # Define the template name
     template_name = 'subjects/session_update_data_handwriting.html'
+
+    # Define the successful redirect URL
+    success_url = 'subjects:session_detail_data_handwriting'
 
     # Define the model name
     model = DataHandwriting
 
     # Define the form class
     form_class = DataHandwritingForm
-
-    def form_valid(self, form):
-        """Form valid hook: sets data's session after created"""
-
-        # Save the form without database update
-        data = form.save(commit=False)
-
-        # Update the session and update the database records
-        data = self.set_session(data)
-        data.save()
-
-        # Return the updated data
-        return super(SessionDataHandwritingUpdateView, self).form_valid(form)
-
-    def set_session(self, data):
-        """Sets the session for a given data after creating"""
-
-        # Update the examination session
-        data.examination_session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Return the updated data
-        return data
-
-    def get_success_url(self):
-        """Returns the success URL"""
-        return reverse_lazy(
-            'subjects:session_detail_data_handwriting',
-            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataHandwritingUpdateView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Add the examination session
-        context.update({'session': session})
-
-        # Return the updated context
-        return context
 
 
 class SessionDataPsychologyDetailView(SessionDataDetailViewTemplate):
@@ -723,64 +654,20 @@ class SessionDataPsychologyDetailView(SessionDataDetailViewTemplate):
     model = DataPsychology
 
 
-class SessionDataPsychologyUpdateView(LoginRequiredMixin, generic.CreateView):
+class SessionDataPsychologyUpdateView(SessionDataUpdateViewTemplate):
     """Class implementing session: psychology data update view"""
 
     # Define the template name
     template_name = 'subjects/session_update_data_psychology.html'
+
+    # Define the successful redirect URL
+    success_url = 'subjects:session_detail_data_psychology'
 
     # Define the model name
     model = DataPsychology
 
     # Define the form class
     form_class = DataPsychologyForm
-
-    def form_valid(self, form):
-        """Form valid hook: sets data's session after created"""
-
-        # Save the form without database update
-        data = form.save(commit=False)
-
-        # Update the session and update the database records
-        data = self.set_session(data)
-        data.save()
-
-        # Return the updated data
-        return super(SessionDataPsychologyUpdateView, self).form_valid(form)
-
-    def set_session(self, data):
-        """Sets the session for a given data after creating"""
-
-        # Update the examination session
-        data.examination_session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Return the updated data
-        return data
-
-    def get_success_url(self):
-        """Returns the success URL"""
-        return reverse_lazy(
-            'subjects:session_detail_data_psychology',
-            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataPsychologyUpdateView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Add the examination session
-        context.update({'session': session})
-
-        # Return the updated context
-        return context
 
 
 class SessionDataTCSDetailView(SessionDataDetailViewTemplate):
@@ -797,64 +684,20 @@ class SessionDataTCSDetailView(SessionDataDetailViewTemplate):
     model = DataTCS
 
 
-class SessionDataTCSUpdateView(LoginRequiredMixin, generic.CreateView):
+class SessionDataTCSUpdateView(SessionDataUpdateViewTemplate):
     """Class implementing session: TCS data update view"""
 
     # Define the template name
     template_name = 'subjects/session_update_data_tcs.html'
+
+    # Define the successful redirect URL
+    success_url = 'subjects:session_detail_data_tcs'
 
     # Define the model name
     model = DataTCS
 
     # Define the form class
     form_class = DataTCSForm
-
-    def form_valid(self, form):
-        """Form valid hook: sets data's session after created"""
-
-        # Save the form without database update
-        data = form.save(commit=False)
-
-        # Update the session and update the database records
-        data = self.set_session(data)
-        data.save()
-
-        # Return the updated data
-        return super(SessionDataTCSUpdateView, self).form_valid(form)
-
-    def set_session(self, data):
-        """Sets the session for a given data after creating"""
-
-        # Update the examination session
-        data.examination_session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Return the updated data
-        return data
-
-    def get_success_url(self):
-        """Returns the success URL"""
-        return reverse_lazy(
-            'subjects:session_detail_data_tcs',
-            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataTCSUpdateView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Add the examination session
-        context.update({'session': session})
-
-        # Return the updated context
-        return context
 
 
 class SessionDataCEIDetailView(SessionDataDetailViewTemplate):
@@ -871,64 +714,20 @@ class SessionDataCEIDetailView(SessionDataDetailViewTemplate):
     model = DataCEI
 
 
-class SessionDataCEIUpdateView(LoginRequiredMixin, generic.CreateView):
+class SessionDataCEIUpdateView(SessionDataUpdateViewTemplate):
     """Class implementing session: cei data update view"""
 
     # Define the template name
     template_name = 'subjects/session_update_data_cei.html'
+
+    # Define the successful redirect URL
+    success_url = 'subjects:session_detail_data_cei'
 
     # Define the model name
     model = DataCEI
 
     # Define the form class
     form_class = DataCEIForm
-
-    def form_valid(self, form):
-        """Form valid hook: sets data's session after created"""
-
-        # Save the form without database update
-        data = form.save(commit=False)
-
-        # Update the session and update the database records
-        data = self.set_session(data)
-        data.save()
-
-        # Return the updated data
-        return super(SessionDataCEIUpdateView, self).form_valid(form)
-
-    def set_session(self, data):
-        """Sets the session for a given data after creating"""
-
-        # Update the examination session
-        data.examination_session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Return the updated data
-        return data
-
-    def get_success_url(self):
-        """Returns the success URL"""
-        return reverse_lazy(
-            'subjects:session_detail_data_cei',
-            kwargs={'code': self.kwargs.get('code'), 'session_number': self.kwargs.get('session_number')})
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataCEIUpdateView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        session = ExaminationSession.get_session(
-            subject_code=self.kwargs.get('code'),
-            session_number=self.kwargs.get('session_number'))
-
-        # Add the examination session
-        context.update({'session': session})
-
-        # Return the updated context
-        return context
 
 
 def export_acoustic_data(request, code, session_number):
