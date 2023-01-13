@@ -25,7 +25,8 @@ from .views import (
     export_handwriting_data,
     export_psychology_data,
     export_tcs_data,
-    export_cei_data
+    export_cei_data,
+    export_subject_report
 )
 
 
@@ -43,6 +44,9 @@ urlpatterns = [
     path('<str:code>/', SubjectDetailView.as_view(), name='subject_detail'),
     path('<str:code>/update/', SubjectUpdateView.as_view(), name='subject_update'),
     path('<str:code>/delete/', SubjectDeleteView.as_view(), name='subject_delete'),
+    path('<str:code>/export_subject_report',
+         export_subject_report,
+         name='export_subject_report'),
 
     # Sessions
     path('<str:code>/create_session/', create_session, name='session_create'),

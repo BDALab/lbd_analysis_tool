@@ -240,7 +240,7 @@ class ExaminationSession(models.Model):
     CACHED_DATA = ExaminationSessionCache
 
     # Define the model schema
-    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE, related_name='examination_sessions')
     session_number = models.SmallIntegerField('session number')
     internal_prefix = models.CharField('internal prefix', max_length=50, null=True, blank=True)
     created_on = models.DateTimeField('created on', auto_now_add=True)

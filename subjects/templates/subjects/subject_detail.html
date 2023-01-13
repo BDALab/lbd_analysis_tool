@@ -151,7 +151,17 @@
                     <div class="flex align-center justify-center text-center my-2 mx-auto">
                         <a href="{% url 'subjects:session_create' subject.code %}"
                            class="flex items-center text-center text-white bg-indigo-500 border-0 mr-1 py-2 px-6 focus:outline-none hover:bg-indigo-600 rounded">
-                            Create a new session
+                            Create session
+                        </a>
+                        <a href="{% url 'subjects:export_subject_report' subject.code %}"
+                           class="inline-flex text-white bg-indigo-500 border-0 py-2 px-3 mx-1 focus:outline-none hover:bg-indigo-600 rounded">
+                            <svg xmlns="http://www.w3.org/2000/svg"
+                                 class="h-5 w-5 mr-1"
+                                 viewBox="0 0 20 20"
+                                 fill="currentColor">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" />
+                            </svg>
+                            Export report
                         </a>
                         <a href="{% url 'subjects:subject_list' %}"
                            class="flex items-center text-center border-0 mx-1 py-2 px-6 bg-gray-100 focus:outline-none hover:bg-gray-200 rounded text-base">

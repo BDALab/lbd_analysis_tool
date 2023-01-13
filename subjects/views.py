@@ -10,9 +10,10 @@ from django.views import generic
 from django.urls import reverse_lazy
 from visualizer.subject import visualize_evolution_of_predictions
 from visualizer.modalities import visualize_most_differentiating_features
+from reporter.subject import create_report
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
-from .models_io import export_data
+from .models_io import export_data, export_report
 from .models_utils import rename_feature, compute_difference_from_norm
 from .models_formatters import FeaturesFormatter
 from .models import (
@@ -764,3 +765,8 @@ def export_tcs_data(request, code, session_number):
 def export_cei_data(request, code, session_number):
     """Exports the CEI data in a CSV file"""
     return export_data(request, code, session_number, model=DataCEI)
+
+
+def export_subject_report(request, code):
+    """Exports the subject preDLB probability predictions report in a PDF file"""
+    return export_report(request, create_report(request, Subject.get_subject(code=code)))

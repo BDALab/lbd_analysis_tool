@@ -40,6 +40,28 @@ def export_data(request, code, session_number, model):
     return response
 
 
+def export_report(request, report_path):
+    """
+    Exports the report in a PDF file that is downloaded in a browser.
+
+    :param request: HTTP request
+    :type request: Request
+    :param report_path: path to the report to be exported
+    :type report_path: str
+    :return: HTTP response for the report to be exported
+    :rtype: HttpResponse
+    """
+
+    # Prepare the HTTP response and the fetched data to be exported
+    response = HttpResponse(content=open(report_path, 'rb'), content_type='application/pdf')
+
+    # Set the content disposition (to be downloaded by a browser)
+    response['Content-Disposition'] = 'attachment; filename="report.pdf"'
+
+    # Return the HTTP response
+    return response
+
+
 def is_csv_file(file=None, path=None):
     """Returns if the input file/path is a *.CSV file"""
     if not any((file, path)):
