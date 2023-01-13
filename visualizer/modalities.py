@@ -59,7 +59,8 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
     )
     fig.update_layout(
         title='Most differentiating features from the normative data',
-        xaxis_title='feature label',
+        title_x=0.5,
+        xaxis_title=None,
         yaxis_title='feature value'
     )
 
