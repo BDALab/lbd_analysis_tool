@@ -1,11 +1,9 @@
-import sys
 import pandas as pd
 import plotly.express as px
 from itertools import chain
 from plotly.offline import plot
 from django.conf import settings
-from subjects.models_utils import rename_feature
-from subjects.models_formatters import FeaturesFormatter
+from subjects.models_utils import rename_feature, compute_difference_from_norm
 
 
 # Presentation settings
@@ -13,33 +11,14 @@ presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features'
 
 
 def visualize_most_differentiating_features(session_data, norm_data, modality, top_n=10):
-    """Gets the visualization of the most differentiating features of a given modality (ina given session)"""
+    """Gets the visualization of the most differentiating features of a given modality (in a given session)"""
 
-    # Prepare the comparison
-    comparison = []
+    # Prepare the comparison of the features to the norm
+    comparison = compute_difference_from_norm(session_data, norm_data)
+    comparison = [c for c in comparison if c['orig value'] and c['norm value']]
 
     # Prepare the modality presentation
     modality_presentation = presentation_config[modality]
-
-    # Compute the comparison
-    for data in session_data:
-        orig = data[FeaturesFormatter.FEATURE_VALUE_FIELD]
-        norm = norm_data[data[FeaturesFormatter.FEATURE_LABEL_FIELD]]['median'] \
-            if data[FeaturesFormatter.FEATURE_LABEL_FIELD] in norm_data \
-            else None
-
-        orig = orig if orig is not None else None
-        norm = norm if norm is not None else None
-
-        if (orig is None or norm is None) or (not orig and not norm):
-            continue
-
-        comparison.append({
-            'feature': data[FeaturesFormatter.FEATURE_LABEL_FIELD],
-            'difference': abs(((orig / (norm + sys.float_info.epsilon)) * 100) - 100),
-            'orig value': orig,
-            'norm value': norm
-        })
 
     # Get the most discriminating features
     comparison = list(sorted(comparison, key=lambda x: x['difference'], reverse=True))

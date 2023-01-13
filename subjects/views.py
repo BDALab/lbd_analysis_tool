@@ -13,7 +13,7 @@ from visualizer.modalities import visualize_most_differentiating_features
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
 from .models_io import export_data
-from .models_utils import rename_feature
+from .models_utils import rename_feature, compute_difference_from_norm
 from .models_formatters import FeaturesFormatter
 from .models import (
     Subject,
@@ -379,11 +379,11 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
         return context
 
 
-class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
-    """Class implementing session: acoustic data detail view"""
+class SessionDataDetailViewTemplate(LoginRequiredMixin, generic.DetailView):
+    """Base class for examination session data (detail view)"""
 
     # Define the template name
-    template_name = 'subjects/session_detail_data_acoustic.html'
+    template_name = ''
 
     # Define the slug attributes to enable filtering based on the specified field
     slug_field = 'session_number'
@@ -392,8 +392,23 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
     # Define the context object name
     context_object_name = 'session'
 
+    # Define the modality label
+    modality = ''
+    modality_data = ''
+
+    # Define the model
+    model = None
+
     # Define the pagination
     paginate_by = 15
+
+    @classmethod
+    def get_norms(cls):
+        return getattr(settings, 'NORM_CONFIGURATION')[cls.modality]
+
+    @classmethod
+    def get_presentation(cls):
+        return getattr(settings, 'PRESENTATION_CONFIGURATION')['features'][cls.modality]
 
     def get_queryset(self):
         """Gets the queryset to be returned"""
@@ -403,52 +418,87 @@ class SessionDataAcousticDetailView(LoginRequiredMixin, generic.DetailView):
         """Enriches the context with additional data"""
 
         # Get the context
-        context = super(SessionDataAcousticDetailView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
         # Get the examination session for given URL parameters
-        original_data = DataAcoustic.get_data(examination_session=self.object.id)
+        original_data = self.model.get_data(examination_session=self.object.id)
 
-        # Prepare the acoustic data
+        # Prepare the data
         if original_data:
-            acoustic_data = FeaturesFormatter(DataAcoustic).prepare_presentable(record=original_data)
+            presentable_data = FeaturesFormatter(self.model).prepare_presentable(record=original_data)
+            computable_data = FeaturesFormatter(self.model).prepare_computable(record=original_data)
         else:
-            acoustic_data = None
+            presentable_data = None
+            computable_data = None
+
+        # Compute the comparison with the normative data
+        if computable_data:
+            comparison = compute_difference_from_norm(session_data=computable_data, norm_data=self.get_norms())
+            comparison = {c['feature']: c for c in comparison}
+
+            for feature in presentable_data:
+                if feature[FeaturesFormatter.FEATURE_LABEL_FIELD] in comparison:
+                    norm = comparison[feature[FeaturesFormatter.FEATURE_LABEL_FIELD]]['norm value']
+                    diff = comparison[feature[FeaturesFormatter.FEATURE_LABEL_FIELD]]['difference']
+                    norm = round(float(norm), 4) if norm is not None else ''
+                    diff = round(float(diff), 4) if diff is not None else ''
+                    feature.update({'norm': norm, 'diff': diff})
 
         # Rename the features
-        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['acoustic']
-        for feature in acoustic_data:
-            feature['label'] = rename_feature(feature['label'], presentation_config)
+        presentation_config = self.get_presentation()
+        for feature in presentable_data:
+            feature[FeaturesFormatter.FEATURE_LABEL_FIELD] = rename_feature(
+                feature_label=feature[FeaturesFormatter.FEATURE_LABEL_FIELD],
+                feature_configuration=presentation_config)
 
-        # Filter the acoustic data and add the filtration into the context
-        if acoustic_data and self.request.GET.get('q'):
-            acoustic_data = [data for data in acoustic_data if self.request.GET.get('q') in data.get('label')]
+        # Filter the data and add the filtration into the context
+        if presentable_data and self.request.GET.get('q'):
             context.update({'q': self.request.GET.get('q')})
+            presentable_data = [
+                data for data in presentable_data
+                if self.request.GET.get('q') in data.get(FeaturesFormatter.FEATURE_LABEL_FIELD)
+            ]
 
-        # Add the acoustic data
-        context.update({'acoustic_data': acoustic_data})
+        # Add the data
+        context.update({self.modality_data: presentable_data})
 
-        # Add the pagination if there are any loaded acoustic data
-        if acoustic_data:
-            paginator = Paginator(acoustic_data, self.paginate_by)
+        # Add the pagination if there are any loaded data
+        if presentable_data:
+            paginator = Paginator(object_list=presentable_data, per_page=self.paginate_by)
             goto_page = self.request.GET.get('page')
 
             context.update({
-                'is_paginated': True if acoustic_data and len(acoustic_data) > self.paginate_by else False,
+                'is_paginated': True if presentable_data and len(presentable_data) > self.paginate_by else False,
                 'paginator': paginator,
                 'page_number': self.request.GET.get('page'),
                 'page_obj': paginator.get_page(goto_page)
             })
 
         # Add the visualization of the most discriminating features to the context
-        if acoustic_data:
-            norm_data = getattr(settings, 'NORM_CONFIGURATION')['acoustic']
-            comp_data = FeaturesFormatter(DataAcoustic).prepare_computable(record=original_data)
+        if computable_data:
             context.update({
-                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'acoustic')
+                'plot_div': visualize_most_differentiating_features(
+                    session_data=computable_data,
+                    norm_data=self.get_norms(),
+                    modality=self.modality)
             })
 
         # Return the updated context
         return context
+
+
+class SessionDataAcousticDetailView(SessionDataDetailViewTemplate):
+    """Class implementing session: acoustic data detail view"""
+
+    # Define the template name
+    template_name = 'subjects/session_detail_data_acoustic.html'
+
+    # Define the modality label
+    modality = 'acoustic'
+    modality_data = 'acoustic_data'
+
+    # Define the model
+    model = DataAcoustic
 
 
 class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
@@ -511,76 +561,18 @@ class SessionDataAcousticUpdateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
-class SessionDataActigraphyDetailView(LoginRequiredMixin, generic.DetailView):
+class SessionDataActigraphyDetailView(SessionDataDetailViewTemplate):
     """Class implementing session: actigraphy data detail view"""
 
     # Define the template name
     template_name = 'subjects/session_detail_data_actigraphy.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the modality label
+    modality = 'actigraphy'
+    modality_data = 'actigraphy_data'
 
-    # Define the context object name
-    context_object_name = 'session'
-
-    # Define the pagination
-    paginate_by = 15
-
-    def get_queryset(self):
-        """Gets the queryset to be returned"""
-        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataActigraphyDetailView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        original_data = DataActigraphy.get_data(examination_session=self.object.id)
-
-        # Prepare the actigraphy data
-        if original_data:
-            actigraphy_data = FeaturesFormatter(DataActigraphy).prepare_presentable(record=original_data)
-        else:
-            actigraphy_data = None
-
-        # Rename the features
-        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['actigraphy']
-        for feature in actigraphy_data:
-            feature['label'] = rename_feature(feature['label'], presentation_config)
-
-        # Filter the actigraphy data and add the filtration into the context
-        if actigraphy_data and self.request.GET.get('q'):
-            actigraphy_data = [data for data in actigraphy_data if self.request.GET.get('q') in data.get('label')]
-            context.update({'q': self.request.GET.get('q')})
-
-        # Add the acoustic data
-        context.update({'actigraphy_data': actigraphy_data})
-
-        # Add the pagination if there are any loaded actigraphy data
-        if actigraphy_data:
-            paginator = Paginator(actigraphy_data, self.paginate_by)
-            goto_page = self.request.GET.get('page')
-
-            context.update({
-                'is_paginated': True if actigraphy_data and len(actigraphy_data) > self.paginate_by else False,
-                'paginator': paginator,
-                'page_number': self.request.GET.get('page'),
-                'page_obj': paginator.get_page(goto_page)
-            })
-
-        # Add the visualization of the most discriminating features to the context
-        if actigraphy_data:
-            norm_data = getattr(settings, 'NORM_CONFIGURATION')['actigraphy']
-            comp_data = FeaturesFormatter(DataActigraphy).prepare_computable(record=original_data)
-            context.update({
-                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'actigraphy')
-            })
-
-        # Return the updated context
-        return context
+    # Define the model
+    model = DataActigraphy
 
 
 class SessionDataActigraphyUpdateView(LoginRequiredMixin, generic.CreateView):
@@ -643,76 +635,18 @@ class SessionDataActigraphyUpdateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
-class SessionDataHandwritingDetailView(LoginRequiredMixin, generic.DetailView):
+class SessionDataHandwritingDetailView(SessionDataDetailViewTemplate):
     """Class implementing session: handwriting data detail view"""
 
     # Define the template name
     template_name = 'subjects/session_detail_data_handwriting.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the modality label
+    modality = 'handwriting'
+    modality_data = 'handwriting_data'
 
-    # Define the context object name
-    context_object_name = 'session'
-
-    # Define the pagination
-    paginate_by = 15
-
-    def get_queryset(self):
-        """Gets the queryset to be returned"""
-        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataHandwritingDetailView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        original_data = DataHandwriting.get_data(examination_session=self.object.id)
-
-        # Prepare the acoustic data
-        if original_data:
-            handwriting_data = FeaturesFormatter(DataHandwriting).prepare_presentable(record=original_data)
-        else:
-            handwriting_data = None
-
-        # Rename the features
-        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['handwriting']
-        for feature in handwriting_data:
-            feature['label'] = rename_feature(feature['label'], presentation_config)
-
-        # Filter the handwriting data and add the filtration into the context
-        if handwriting_data and self.request.GET.get('q'):
-            handwriting_data = [data for data in handwriting_data if self.request.GET.get('q') in data.get('label')]
-            context.update({'q': self.request.GET.get('q')})
-
-        # Add the handwriting data
-        context.update({'handwriting_data': handwriting_data})
-
-        # Add the pagination if there are any loaded handwriting data
-        if handwriting_data:
-            paginator = Paginator(handwriting_data, self.paginate_by)
-            goto_page = self.request.GET.get('page')
-
-            context.update({
-                'is_paginated': True if handwriting_data and len(handwriting_data) > self.paginate_by else False,
-                'paginator': paginator,
-                'page_number': self.request.GET.get('page'),
-                'page_obj': paginator.get_page(goto_page)
-            })
-
-        # Add the visualization of the most discriminating features to the context
-        if handwriting_data:
-            norm_data = getattr(settings, 'NORM_CONFIGURATION')['handwriting']
-            comp_data = FeaturesFormatter(DataHandwriting).prepare_computable(record=original_data)
-            context.update({
-                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'handwriting')
-            })
-
-        # Return the updated context
-        return context
+    # Define the model
+    model = DataHandwriting
 
 
 class SessionDataHandwritingUpdateView(LoginRequiredMixin, generic.CreateView):
@@ -775,76 +709,18 @@ class SessionDataHandwritingUpdateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
-class SessionDataPsychologyDetailView(LoginRequiredMixin, generic.DetailView):
+class SessionDataPsychologyDetailView(SessionDataDetailViewTemplate):
     """Class implementing session: psychology data detail view"""
 
     # Define the template name
     template_name = 'subjects/session_detail_data_psychology.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the modality label
+    modality = 'psychology'
+    modality_data = 'psychology_data'
 
-    # Define the context object name
-    context_object_name = 'session'
-
-    # Define the pagination
-    paginate_by = 15
-
-    def get_queryset(self):
-        """Gets the queryset to be returned"""
-        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataPsychologyDetailView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        original_data = DataPsychology.get_data(examination_session=self.object.id)
-
-        # Prepare the psychology data
-        if original_data:
-            psychology_data = FeaturesFormatter(DataPsychology).prepare_presentable(record=original_data)
-        else:
-            psychology_data = None
-
-        # Rename the features
-        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['psychology']
-        for feature in psychology_data:
-            feature['label'] = rename_feature(feature['label'], presentation_config)
-
-        # Filter the psychology data and add the filtration into the context
-        if psychology_data and self.request.GET.get('q'):
-            psychology_data = [data for data in psychology_data if self.request.GET.get('q') in data.get('label')]
-            context.update({'q': self.request.GET.get('q')})
-
-        # Add the psychology data
-        context.update({'psychology_data': psychology_data})
-
-        # Add the pagination if there are any loaded psychology data
-        if psychology_data:
-            paginator = Paginator(psychology_data, self.paginate_by)
-            goto_page = self.request.GET.get('page')
-
-            context.update({
-                'is_paginated': True if psychology_data and len(psychology_data) > self.paginate_by else False,
-                'paginator': paginator,
-                'page_number': self.request.GET.get('page'),
-                'page_obj': paginator.get_page(goto_page)
-            })
-
-        # Add the visualization of the most discriminating features to the context
-        if psychology_data:
-            norm_data = getattr(settings, 'NORM_CONFIGURATION')['psychology']
-            comp_data = FeaturesFormatter(DataPsychology).prepare_computable(record=original_data)
-            context.update({
-                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'psychology')
-            })
-
-        # Return the updated context
-        return context
+    # Define the model
+    model = DataPsychology
 
 
 class SessionDataPsychologyUpdateView(LoginRequiredMixin, generic.CreateView):
@@ -907,76 +783,18 @@ class SessionDataPsychologyUpdateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
-class SessionDataTCSDetailView(LoginRequiredMixin, generic.DetailView):
+class SessionDataTCSDetailView(SessionDataDetailViewTemplate):
     """Class implementing session: TCS data detail view"""
 
     # Define the template name
     template_name = 'subjects/session_detail_data_tcs.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the modality label
+    modality = 'tcs'
+    modality_data = 'tcs_data'
 
-    # Define the context object name
-    context_object_name = 'session'
-
-    # Define the pagination
-    paginate_by = 15
-
-    def get_queryset(self):
-        """Gets the queryset to be returned"""
-        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataTCSDetailView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        original_data = DataTCS.get_data(examination_session=self.object.id)
-
-        # Prepare the tcs data
-        if original_data:
-            tcs_data = FeaturesFormatter(DataTCS).prepare_presentable(record=original_data)
-        else:
-            tcs_data = None
-
-        # Rename the features
-        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['tcs']
-        for feature in tcs_data:
-            feature['label'] = rename_feature(feature['label'], presentation_config)
-
-        # Filter the tcs data and add the filtration into the context
-        if tcs_data and self.request.GET.get('q'):
-            tcs_data = [data for data in tcs_data if self.request.GET.get('q') in data.get('label')]
-            context.update({'q': self.request.GET.get('q')})
-
-        # Add the tcs data
-        context.update({'tcs_data': tcs_data})
-
-        # Add the pagination if there are any loaded tcs data
-        if tcs_data:
-            paginator = Paginator(tcs_data, self.paginate_by)
-            goto_page = self.request.GET.get('page')
-
-            context.update({
-                'is_paginated': True if tcs_data and len(tcs_data) > self.paginate_by else False,
-                'paginator': paginator,
-                'page_number': self.request.GET.get('page'),
-                'page_obj': paginator.get_page(goto_page)
-            })
-
-        # Add the visualization of the most discriminating features to the context
-        if tcs_data:
-            norm_data = getattr(settings, 'NORM_CONFIGURATION')['tcs']
-            comp_data = FeaturesFormatter(DataTCS).prepare_computable(record=original_data)
-            context.update({
-                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'tcs')
-            })
-
-        # Return the updated context
-        return context
+    # Define the model
+    model = DataTCS
 
 
 class SessionDataTCSUpdateView(LoginRequiredMixin, generic.CreateView):
@@ -1039,76 +857,18 @@ class SessionDataTCSUpdateView(LoginRequiredMixin, generic.CreateView):
         return context
 
 
-class SessionDataCEIDetailView(LoginRequiredMixin, generic.DetailView):
+class SessionDataCEIDetailView(SessionDataDetailViewTemplate):
     """Class implementing session: CEI data detail view"""
 
     # Define the template name
     template_name = 'subjects/session_detail_data_cei.html'
 
-    # Define the slug attributes to enable filtering based on the specified field
-    slug_field = 'session_number'
-    slug_url_kwarg = 'session_number'
+    # Define the modality label
+    modality = 'cei'
+    modality_data = 'cei_data'
 
-    # Define the context object name
-    context_object_name = 'session'
-
-    # Define the pagination
-    paginate_by = 15
-
-    def get_queryset(self):
-        """Gets the queryset to be returned"""
-        return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
-
-    def get_context_data(self, **kwargs):
-        """Enriches the context with additional data"""
-
-        # Get the context
-        context = super(SessionDataCEIDetailView, self).get_context_data(**kwargs)
-
-        # Get the examination session for given URL parameters
-        original_data = DataCEI.get_data(examination_session=self.object.id)
-
-        # Prepare the cei data
-        if original_data:
-            cei_data = FeaturesFormatter(DataCEI).prepare_presentable(record=original_data)
-        else:
-            cei_data = None
-
-        # Rename the features
-        presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']['cei']
-        for feature in cei_data:
-            feature['label'] = rename_feature(feature['label'], presentation_config)
-
-        # Filter the cei data and add the filtration into the context
-        if cei_data and self.request.GET.get('q'):
-            cei_data = [data for data in cei_data if self.request.GET.get('q') in data.get('label')]
-            context.update({'q': self.request.GET.get('q')})
-
-        # Add the cei data
-        context.update({'cei_data': cei_data})
-
-        # Add the pagination if there are any loaded cei data
-        if cei_data:
-            paginator = Paginator(cei_data, self.paginate_by)
-            goto_page = self.request.GET.get('page')
-
-            context.update({
-                'is_paginated': True if cei_data and len(cei_data) > self.paginate_by else False,
-                'paginator': paginator,
-                'page_number': self.request.GET.get('page'),
-                'page_obj': paginator.get_page(goto_page)
-            })
-
-        # Add the visualization of the most discriminating features to the context
-        if cei_data:
-            norm_data = getattr(settings, 'NORM_CONFIGURATION')['cei']
-            comp_data = FeaturesFormatter(DataCEI).prepare_computable(record=original_data)
-            context.update({
-                'plot_div': visualize_most_differentiating_features(comp_data, norm_data, 'cei')
-            })
-
-        # Return the updated context
-        return context
+    # Define the model
+    model = DataCEI
 
 
 class SessionDataCEIUpdateView(LoginRequiredMixin, generic.CreateView):
