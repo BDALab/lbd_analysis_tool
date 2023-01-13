@@ -20,6 +20,9 @@ def get_evolution_of_predictions(user, subject):
         for s in ExaminationSession.objects.filter(subject=subject)
     ]
 
+    if not probabilities:
+        return None
+
     # Prepare the graph
     fig = px.bar(
         data_frame=pd.DataFrame(probabilities),
@@ -46,7 +49,7 @@ def visualize_evolution_of_predictions(user, subject):
     fig = get_evolution_of_predictions(user, subject)
 
     # Return the prepared graph object (as a DIV element)
-    return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text='')
+    return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text='') if fig else ''
 
 
 def save_evolution_of_predictions(user, subject):
@@ -54,6 +57,8 @@ def save_evolution_of_predictions(user, subject):
 
     # Get the evolution of preDLB of a subject
     fig = get_evolution_of_predictions(user, subject)
+    if not fig:
+        return ''
 
     # Get the path to save the graph into
     save_path = os.path.join(getattr(settings, 'TEMP_PATH'), f'{subject.code}-{secrets.token_urlsafe(16)}.png')

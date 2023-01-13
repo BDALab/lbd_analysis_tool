@@ -29,6 +29,8 @@ class SubjectPDFReport(FPDF):
         self.lbd_path = save_evolution_of_predictions(user, subject)
 
     def get_lbd_probability_graph(self):
+        if not self.lbd_path:
+            return None
         with open(self.lbd_path, 'rb') as f:
             return f.read()
 
@@ -66,7 +68,8 @@ def create_report(request, subject):
 
     # Add the predicted preDLB probabilities
     pdf.set_lbd_probability_graph(request.user, subject)
-    pdf.image(pdf.lbd_path, x=25, y=None, w=160, h=0, type='png', link='')
+    if pdf.lbd_path:
+        pdf.image(pdf.lbd_path, x=25, y=None, w=160, h=0, type='png', link='')
 
     # Prepare the filepath to store the report into
     output_path = os.path.join(getattr(settings, 'REPORTS_PATH'), f'{subject.code}.pdf')

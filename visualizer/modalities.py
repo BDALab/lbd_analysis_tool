@@ -46,7 +46,7 @@ def get_most_differentiating_features(session_data, norm_data, modality, top_n=1
     ]))
 
     if not data:
-        return ''
+        return None
 
     # Resort the data once again
     data = list(sorted(data, key=lambda x: x['difference'], reverse=True))
@@ -77,7 +77,7 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
     fig = get_most_differentiating_features(session_data, norm_data, modality, top_n)
 
     # Return the prepared graph object (as a DIV element)
-    return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text='')
+    return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text='') if fig else ''
 
 
 def save_most_differentiating_features(session_data, norm_data, modality, top_n=10):
@@ -85,6 +85,8 @@ def save_most_differentiating_features(session_data, norm_data, modality, top_n=
 
     # Get the most differentiating features of a given modality (in a given session)
     fig = get_most_differentiating_features(session_data, norm_data, modality, top_n)
+    if not fig:
+        return ''
 
     # Get the path to save the graph into
     save_path = os.path.join(getattr(settings, 'TEMP_PATH'), f'{modality}-{secrets.token_urlsafe(16)}.png')
