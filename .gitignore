@@ -133,6 +133,8 @@ dmypy.json
 # Data (files)
 media_root/
 data/
+temp/
+obsolete/
 
 # logs
 logs/
