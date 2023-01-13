@@ -134,6 +134,7 @@ dmypy.json
 media_root/
 data/
 temp/
+reports/
 obsolete/
 
 # logs

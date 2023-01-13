@@ -166,6 +166,7 @@ PRESENTATION_CONFIGURATION = load_configuration('presentation.json')
 # Temp path settings
 TEMP_PATH = temp_path
 LOGS_PATH = logs_path
+REPORTS_PATH = reports_path
 
 # # Logging settings
 # LOGGING = {
