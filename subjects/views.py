@@ -444,6 +444,12 @@ class SessionDataDetailViewTemplate(LoginRequiredMixin, generic.DetailView):
                     diff = round(float(diff), 4) if diff is not None else ''
                     feature.update({'norm': norm, 'diff': diff})
 
+        # Convert the numerical data into strings of fixed number of decimal places (for better UX)
+        for feature in presentable_data:
+            for key, value in feature.items():
+                if isinstance(value, float):
+                    feature[key] = '{:.4f}'.format(value)
+
         # Rename the features
         presentation_config = self.get_presentation()
         for feature in presentable_data:
