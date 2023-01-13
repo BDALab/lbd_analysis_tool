@@ -769,4 +769,4 @@ def export_cei_data(request, code, session_number):
 
 def export_subject_report(request, code):
     """Exports the subject preDLB probability predictions report in a PDF file"""
-    return export_report(request, create_report(request, Subject.get_subject(code=code)))
+    return export_report(request, code, create_report(request, Subject.get_subject(code=code)))
