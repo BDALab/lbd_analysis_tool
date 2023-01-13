@@ -1,3 +1,5 @@
+import os
+import secrets
 import pandas as pd
 import plotly.express as px
 from itertools import chain
@@ -10,8 +12,8 @@ from subjects.models_utils import rename_feature, compute_difference_from_norm
 presentation_config = getattr(settings, 'PRESENTATION_CONFIGURATION')['features']
 
 
-def visualize_most_differentiating_features(session_data, norm_data, modality, top_n=10):
-    """Gets the visualization of the most differentiating features of a given modality (in a given session)"""
+def get_most_differentiating_features(session_data, norm_data, modality, top_n=10):
+    """Gets the most differentiating features of a given modality (in a given session)"""
 
     # Prepare the comparison of the features to the norm
     comparison = compute_difference_from_norm(session_data, norm_data)
@@ -64,5 +66,31 @@ def visualize_most_differentiating_features(session_data, norm_data, modality, t
         yaxis_title='feature value'
     )
 
+    # Return the prepared graph object
+    return fig
+
+
+def visualize_most_differentiating_features(session_data, norm_data, modality, top_n=10):
+    """Gets the visualization of the most differentiating features of a given modality (in a given session)"""
+
+    # Get the most differentiating features of a given modality (in a given session)
+    fig = get_most_differentiating_features(session_data, norm_data, modality, top_n)
+
     # Return the prepared graph object (as a DIV element)
     return plot(fig, output_type='div', include_plotlyjs=False, show_link=False, link_text='')
+
+
+def save_most_differentiating_features(session_data, norm_data, modality, top_n=10):
+    """Saves the most differentiating features of a given modality (in a given session)"""
+
+    # Get the most differentiating features of a given modality (in a given session)
+    fig = get_most_differentiating_features(session_data, norm_data, modality, top_n)
+
+    # Get the path to save the graph into
+    save_path = os.path.join(getattr(settings, 'TEMP_PATH'), f'{modality}-{secrets.token_urlsafe(16)}.png')
+
+    # Save the prepared graph
+    fig.write_image(save_path)
+
+    # Return the path to the saved graph
+    return save_path
