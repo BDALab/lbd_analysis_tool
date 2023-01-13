@@ -163,6 +163,10 @@ NORM_CONFIGURATION = load_configuration('normative.json')
 # Presentation settings
 PRESENTATION_CONFIGURATION = load_configuration('presentation.json')
 
+# Temp path settings
+TEMP_PATH = temp_path
+LOGS_PATH = logs_path
+
 # # Logging settings
 # LOGGING = {
 #     'version': 1,
