@@ -2,6 +2,11 @@ import os
 import pandas as pd
 
 
+# Prepare the paths
+temp_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'temp')
+logs_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'logs')
+
+
 def ensure_directory(path):
     dirs = os.path.dirname(path)
     if dirs and not os.path.exists(dirs):
@@ -25,6 +30,6 @@ def save_to_excel_multi(dfs, sheet_names, output_path, index=False):
             writer.save()
 
 
-# Create the temporary directory
-ensure_directory(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'temp'))
-ensure_directory(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'logs'))
+# Create the temporary directories
+ensure_directory(temp_path)
+ensure_directory(logs_path)

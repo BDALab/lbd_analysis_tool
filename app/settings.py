@@ -1,6 +1,6 @@
 import environ
 from pathlib import Path
-from .configuration import load_configuration
+from .configuration import *
 from .utils import *
 
 

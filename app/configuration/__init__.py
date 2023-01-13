@@ -2,7 +2,7 @@ import os
 import json
 
 
-# Prepare the configuration path
+# Prepare the path
 configuration_path = os.path.dirname(os.path.realpath(__file__))
 
 
