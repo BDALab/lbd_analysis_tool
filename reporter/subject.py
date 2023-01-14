@@ -121,10 +121,17 @@ def create_report(request, subject):
         norm_data = getattr(settings, 'NORM_CONFIGURATION')[modality_label]
 
         # Get the computation data
-        comp_data = FeaturesFormatter(modality_model).prepare_computable(record=modality_data)
+        if modality_data:
+            comp_data = FeaturesFormatter(modality_model).prepare_computable(record=modality_data)
+        else:
+            comp_data = None
 
         # Add the most differentiating features for the modality
-        graph_path = save_most_differentiating_features_and_table(comp_data, norm_data, modality_label, top_n=10)
+        if comp_data and norm_data:
+            graph_path = save_most_differentiating_features_and_table(comp_data, norm_data, modality_label, top_n=10)
+        else:
+            graph_path = None
+
         if graph_path:
             pdf.image(graph_path, x=25, y=None, w=160, h=0, type='png', link='')
         else:
