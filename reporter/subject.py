@@ -97,6 +97,8 @@ def create_report(request, subject):
 
     # Get the last examination session
     last_session = subject.examination_sessions.last()
+    if not last_session:
+        return ''
 
     # Get the data per modality for the last examination session
     examination_data = [
