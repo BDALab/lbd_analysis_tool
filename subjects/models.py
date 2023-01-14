@@ -574,3 +574,17 @@ DATA_TO_MODEL_CLASS_MAPPING = {
     'tcs': DataTCS,
     'cei': DataCEI
 }
+
+
+# Define the examination session parts
+# 1. examination name
+# 2. path name
+# 3. model
+examinations = [
+    ('acoustic', 'session_detail_data_acoustic', DataAcoustic),
+    ('actigraphy', 'session_detail_data_actigraphy', DataActigraphy),
+    ('handwriting', 'session_detail_data_handwriting', DataHandwriting),
+    ('psychology', 'session_detail_data_psychology', DataPsychology),
+    ('tcs', 'session_detail_data_tcs', DataTCS),
+    ('cei', 'session_detail_data_cei', DataCEI)
+]

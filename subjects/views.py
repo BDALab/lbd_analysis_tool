@@ -24,7 +24,8 @@ from .models import (
     DataHandwriting,
     DataPsychology,
     DataTCS,
-    DataCEI
+    DataCEI,
+    examinations
 )
 from .forms import (
     SubjectModelForm,
@@ -337,19 +338,6 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
     # Define the context object name
     context_object_name = 'session'
 
-    # Define the examination session parts
-    # 1. examination name
-    # 2. path name
-    # 3. model
-    examinations = [
-        ('acoustic', 'session_detail_data_acoustic', DataAcoustic),
-        ('actigraphy', 'session_detail_data_actigraphy', DataActigraphy),
-        ('handwriting', 'session_detail_data_handwriting', DataHandwriting),
-        ('psychology', 'session_detail_data_psychology', DataPsychology),
-        ('tcs', 'session_detail_data_tcs', DataTCS),
-        ('cei', 'session_detail_data_cei', DataCEI)
-    ]
-
     def get_queryset(self):
         """Gets the queryset to be returned"""
         return ExaminationSession.get_sessions(subject=Subject.get_subject(code=self.kwargs.get('code')))
@@ -361,13 +349,13 @@ class SessionDetailView(LoginRequiredMixin, generic.DetailView):
         context = super(SessionDetailView, self).get_context_data(**kwargs)
 
         # Get the examinations for the given session
-        examinations = [
+        examination_data = [
             {'name': name, 'path': path, 'data': model.get_data(examination_session=self.object.id)}
-            for name, path, model in self.examinations
+            for name, path, model in examinations
         ]
 
         # Add the examinations
-        context.update({'examinations': examinations})
+        context.update({'examinations': examination_data})
 
         # Predict the LBD probability (get the cached value)
         lbd_probability = ExaminationSessionLBDPredictor.predict_lbd_probability(self.request.user, self.object)
@@ -434,7 +422,7 @@ class SessionDataDetailViewTemplate(LoginRequiredMixin, generic.DetailView):
 
         # Compute the comparison with the normative data
         if computable_data:
-            comparison = compute_difference_from_norm(session_data=computable_data, norm_data=self.get_norms())
+            comparison = compute_difference_from_norm(computable_data, self.get_norms(), modality=self.modality)
             comparison = {c['feature']: c for c in comparison}
 
             for feature in presentable_data:
@@ -450,13 +438,6 @@ class SessionDataDetailViewTemplate(LoginRequiredMixin, generic.DetailView):
             for key, value in feature.items():
                 if isinstance(value, float):
                     feature[key] = '{:.4f}'.format(value)
-
-        # Rename the features
-        presentation_config = self.get_presentation()
-        for feature in presentable_data:
-            feature[FeaturesFormatter.FEATURE_LABEL_FIELD] = rename_feature(
-                feature_label=feature[FeaturesFormatter.FEATURE_LABEL_FIELD],
-                feature_configuration=presentation_config)
 
         # Filter the data and add the filtration into the context
         if presentable_data and self.request.GET.get('q'):
