@@ -14,7 +14,7 @@ from reporter.subject import create_report
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
 from .models_io import export_data, export_report
-from .models_utils import rename_feature, compute_difference_from_norm
+from .models_utils import compute_difference_from_norm
 from .models_formatters import FeaturesFormatter
 from .models import (
     Subject,
