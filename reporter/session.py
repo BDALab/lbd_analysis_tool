@@ -5,7 +5,7 @@ from django.conf import settings
 from visualizer.modalities import save_most_differentiating_features_and_table
 from subjects.models import examinations
 from subjects.models_formatters import FeaturesFormatter
-from subjects.views_predictors import SubjectLBDPredictor
+from subjects.views_predictors import ExaminationSessionLBDPredictor
 
 
 class SessionPDFReport(FPDF):
@@ -30,12 +30,11 @@ class SessionPDFReport(FPDF):
 def create_report(request, subject, session):
     """Creates a PDF report"""
 
-    # Create a subject PDF report
+    # Create a session PDF report
     pdf = SessionPDFReport()
 
-    # Predict the probability of preDLB for a subject
-    if not subject.lbd_probability:
-        subject.lbd_probability = SubjectLBDPredictor.predict_lbd_probability(request.user, subject)
+    # Predict the probability of preDLB for the given examination session
+    lbd_probability = ExaminationSessionLBDPredictor.predict_lbd_probability(request.user, session)
 
     # --
     # First page: general information
@@ -48,7 +47,7 @@ def create_report(request, subject, session):
     pdf.ln(pdf.ch)
     pdf.ln(pdf.ch)
 
-    # Add the subject information
+    # Add the subject (and session) information
     pdf.set_font('Arial', 'B', 18)
     pdf.cell(w=0, h=20, txt=f'{subject.code} ({session.session_number}. examination session)', ln=1)
 
@@ -60,7 +59,7 @@ def create_report(request, subject, session):
     pdf.cell(w=60, h=pdf.ch, txt='Number of examinations: ', ln=0)
     pdf.cell(w=60, h=pdf.ch, txt=str(subject.examination_sessions.count()), ln=1)
     pdf.cell(w=60, h=pdf.ch, txt='Probability of preDLB: ', ln=0)
-    pdf.cell(w=60, h=pdf.ch, txt=str(subject.lbd_probability or ''), ln=1)
+    pdf.cell(w=60, h=pdf.ch, txt=str(lbd_probability or ''), ln=1)
 
     # --
     # Other pages: most differentiating features
