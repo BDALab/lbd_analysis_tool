@@ -10,7 +10,8 @@ from django.views import generic
 from django.urls import reverse_lazy
 from visualizer.subject import visualize_evolution_of_predictions
 from visualizer.modalities import visualize_most_differentiating_features
-from reporter.subject import create_report
+from reporter.subject import create_report as create_subject_report
+from reporter.session import create_report as session_subject_report
 from .views_io import import_subjects_from_external_source
 from .views_predictors import SubjectLBDPredictor, ExaminationSessionLBDPredictor
 from .models_io import export_data, export_report
@@ -750,4 +751,23 @@ def export_cei_data(request, code, session_number):
 
 def export_subject_report(request, code):
     """Exports the subject preDLB probability predictions report in a PDF file"""
-    return export_report(request, code, create_report(request, Subject.get_subject(code=code)))
+
+    # Prepare the report
+    report_path = create_subject_report(request, Subject.get_subject(code=code))
+
+    # Export the report
+    return export_report(request, code, report_path)
+
+
+def export_session_report(request, code, session_number):
+    """Exports the session preDLB probability predictions report in a PDF file"""
+
+    # Get the subject and the session
+    subject = Subject.get_subject(code=code)
+    session = ExaminationSession.get_session(subject=subject, session_number=session_number)
+
+    # Prepare the report
+    report_path = session_subject_report(request, subject, session)
+
+    # Export the report
+    return export_report(request, code, report_path)

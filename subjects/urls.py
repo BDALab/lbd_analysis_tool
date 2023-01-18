@@ -26,7 +26,8 @@ from .views import (
     export_psychology_data,
     export_tcs_data,
     export_cei_data,
-    export_subject_report
+    export_subject_report,
+    export_session_report
 )
 
 
@@ -51,6 +52,9 @@ urlpatterns = [
     # Sessions
     path('<str:code>/create_session/', create_session, name='session_create'),
     path('<str:code>/session/<int:session_number>/detail/', SessionDetailView.as_view(), name='session_detail'),
+    path('<str:code>/session/<int:session_number>/export_session_report',
+         export_session_report,
+         name='export_session_report'),
 
     # 1. acoustic data
     path('<str:code>/session/<int:session_number>/data_acoustic/export',
