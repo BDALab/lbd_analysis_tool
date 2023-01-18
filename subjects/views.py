@@ -756,7 +756,7 @@ def export_subject_report(request, code):
     report_path = create_subject_report(request, Subject.get_subject(code=code))
 
     # Export the report
-    return export_report(request, code, report_path)
+    return export_report(request, report_path=report_path, subject_code=code)
 
 
 def export_session_report(request, code, session_number):
@@ -770,4 +770,4 @@ def export_session_report(request, code, session_number):
     report_path = session_subject_report(request, subject, session)
 
     # Export the report
-    return export_report(request, code, report_path)
+    return export_report(request, report_path=report_path, subject_code=code, session_number=session_number)

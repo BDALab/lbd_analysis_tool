@@ -40,14 +40,16 @@ def export_data(request, code, session_number, model):
     return response
 
 
-def export_report(request, code, report_path):
+def export_report(request, report_path, subject_code, session_number=None):
     """
     Exports the report in a PDF file that is downloaded in a browser.
 
     :param request: HTTP request
     :type request: Request
-    :param code: code of the subject
-    :type code: str
+    :param subject_code: code of the subject
+    :type subject_code: str
+    :param session_number: number of the examination session
+    :type session_number: str
     :param report_path: path to the report to be exported
     :type report_path: str
     :return: HTTP response for the report to be exported
@@ -58,7 +60,10 @@ def export_report(request, code, report_path):
     response = HttpResponse(content=open(report_path, 'rb'), content_type='application/pdf')
 
     # Prepare the file name for the attachment
-    file_name = f'report-{code}.pdf'
+    if session_number:
+        file_name = f'report-{subject_code}_session_{session_number}.pdf'
+    else:
+        file_name = f'report-{subject_code}.pdf'
 
     # Set the content disposition (to be downloaded by a browser)
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
